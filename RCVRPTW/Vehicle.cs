@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace RCVRPTW
 {
-    internal class Vehicle
+    public class Vehicle
     {
         public double Capacity;
         public int Id;

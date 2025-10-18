@@ -8,27 +8,36 @@ List<Location> locations = new List<Location>();
 List<Route> routes = new List<Route>();
 
 var Vehicles = new List<Vehicle>();
-Vehicles.Add(new Vehicle(0, 50.0)) ;
-Vehicles.Add(new Vehicle(0, 60.0));
-Vehicles.Add(new Vehicle(0, 70.0));
-Vehicles.Add(new Vehicle(0, 80.0));
+Vehicles.Add(new Vehicle(0, 90.0)) ;
+Vehicles.Add(new Vehicle(0, 90.0));
+Vehicles.Add(new Vehicle(0, 90.0));
+Vehicles.Add(new Vehicle(0, 90.0));
 var VehicleStarts = new List<double>();
 //dodac sprawdzenie czy czasem lepiej poczekac zeby nie było kary czy wykonywać z karą!!!
 var gd = createGreedyGTR(instance.DistanceMatrix, instance.Locations, VehicleStarts,Vehicles);
 Solution test = generateGreedySolution(gd, VehicleStarts, Vehicles);
-var (totalCost, totalPenalty, costOfTrucks) = calculateTotalCost(instance.DistanceMatrix, test);
+var (totalCost, totalPenalty, costOfTrucks, vehicleOperationTime) = calculateTotalCost(instance.DistanceMatrix, test);
 
+locations.Add(instance.Locations[0]);
+locations.Add(instance.Locations[8]);
+locations.Add(instance.Locations[0]);
+var (bc, bp, bvot, bst) = NeighborhoodGeneratorLocation.bestStartTime(locations, instance.DistanceMatrix);
 
-var nbg = NeighborhoodGeneratorLocation.GenerateAllSwaps(test.Routes);
+var nbg = NeighborhoodGeneratorLocation.GenerateAllSwaps(test.Routes, Vehicles, instance.DistanceMatrix);
+foreach(var n in nbg)
+{
+    Console.WriteLine(n);
+}
 
-(double totalCost, double totalPenalty, double costOfTrucks) calculateTotalCost(double[,] distanceMatrix,  Solution solution)
+(double totalCost, double totalPenalty, double costOfTrucks, double vehicleOperationTime) calculateTotalCost(double[,] distanceMatrix,  Solution solution)
 {
     var routes = solution.Routes;
     double cost = 0.0;
     double penalty = 0.0;
-    double vehicleTime = 0.0;
+    double vehicleTime = 0.0;// koszt operowania tez musi byc uwzgledniony
     double costOfTrucks = 0.0;
-    foreach(var route in routes)//a moze czasem lepiej sie zaczac wczesniej jak mozna, zeby potem miec wieksze mozliwosci???
+    double vehicleOperationTime = 0.0;
+    foreach (var route in routes)//a moze czasem lepiej sie zaczac wczesniej jak mozna, zeby potem miec wieksze mozliwosci???
     {
         vehicleTime = route.StartTime;
         for (int r = 1; r < route.Stops.Count; r++)
@@ -57,30 +66,34 @@ var nbg = NeighborhoodGeneratorLocation.GenerateAllSwaps(test.Routes);
                 penalty += toLatePenalty;
             }
         }
+        vehicleOperationTime += vehicleTime-route.StartTime;
     }
-    return (cost, penalty, costOfTrucks);
+    return (cost, penalty, costOfTrucks, vehicleOperationTime);
 }
 
-Solution generateGreedySolution(List<Location> greedyGTR, List<double> vehicleStarts, List<Vehicle> Vehicles)
+Solution generateGreedySolution(List<Location> greedyGTR, List<double> vehicleStarts, List<Vehicle> Vehicles) //wprowadzic czekanie jezeli sie oplaca
 {
     List<Route> routes = new List<Route>();
     var result = new List<Route>();
     var current = new List<Location>();
     int numRoutes = 0;
+    var currentLoad = 0.0;
     foreach (var loc in greedyGTR)
     {
         current.Add(loc);
+        currentLoad += loc.DemandMean;
         if (loc.Id == 0 && current.Count > 1)
         {
-            result.Add(new Route(Vehicles[numRoutes].Capacity, new List<Location>(current), vehicleStarts[numRoutes]));
+            result.Add(new Route(Vehicles[numRoutes].Capacity, new List<Location>(current), vehicleStarts[numRoutes],currentLoad));
             current.Clear();
+            currentLoad = 0.0;
             current.Add(loc); // zaczynamy nową trasę od bazy
             numRoutes++;
         }
     }
     // Jeśli coś zostało, dodaj jako ostatnią trasę
     if (current.Count > 1)
-        result.Add(new Route(Vehicles[numRoutes].Capacity, new List<Location>(current), vehicleStarts[numRoutes]));
+        result.Add(new Route(Vehicles[numRoutes].Capacity, new List<Location>(current), vehicleStarts[numRoutes], currentLoad));
 
     return new Solution(result);
 }
