@@ -2,34 +2,44 @@
 
 using RCVRPTW;
 
-Instance instance = new Instance();
-instance.ParseSolomonFile("pliki\\CTEST.txt");
+Instance instance = new Instance("pliki\\CTEST.txt");
 List<Location> locations = new List<Location>();
 List<Route> routes = new List<Route>();
 
-var Vehicles = new List<Vehicle>();
-Vehicles.Add(new Vehicle(0, 90.0)) ;
-Vehicles.Add(new Vehicle(0, 90.0));
-Vehicles.Add(new Vehicle(0, 90.0));
-Vehicles.Add(new Vehicle(0, 90.0));
-var VehicleStarts = new List<double>();
+
 //dodac sprawdzenie czy czasem lepiej poczekac zeby nie było kary czy wykonywać z karą!!!
-var gd = createGreedyGTR(instance.DistanceMatrix, instance.Locations, VehicleStarts,Vehicles);
-Solution test = generateGreedySolution(gd, VehicleStarts, Vehicles);
+var (gd, VehicleStarts) = createGreedyGTR(instance);
+Solution test = generateGreedySolution(gd, VehicleStarts, instance.Vehicles);
 var (totalCost, totalPenalty, costOfTrucks, vehicleOperationTime) = calculateTotalCost(instance.DistanceMatrix, test);
 
 locations.Add(instance.Locations[0]);
 locations.Add(instance.Locations[8]);
 locations.Add(instance.Locations[0]);
 var (bc, bp, bvot, bst) = NeighborhoodGeneratorLocation.bestStartTime(locations, instance.DistanceMatrix);
+var nbg = NeighborhoodGeneratorLocation.GenerateAllSwaps(test.Routes, instance.Vehicles, instance.DistanceMatrix);
 
-var nbg = NeighborhoodGeneratorLocation.GenerateAllSwaps(test.Routes, Vehicles, instance.DistanceMatrix);
-foreach(var n in nbg)
+
+for(int iterations = 10; iterations <= 10000; iterations *= 10)
 {
-    Console.WriteLine(n);
+    for(int tabuSize = 10; tabuSize <= 50; tabuSize += 10)
+    {
+        var startTime = DateTime.Now;
+        var res = TabuSearch(iterations, tabuSize, instance);
+        var endTime = DateTime.Now;
+        var duration = endTime - startTime;
+        Console.WriteLine($"{iterations} {tabuSize} {res.TotalCost+res.TotalPenalty+res.TotalVehicleOperationTime} {duration.TotalMilliseconds}");
+        if(res.TotalCost + res.TotalPenalty + res.TotalVehicleOperationTime < 300)
+        {
+            var x = res.TotalCost + res.TotalPenalty + res.TotalVehicleOperationTime;
+        }
+    }
+  
 }
 
-(double totalCost, double totalPenalty, double costOfTrucks, double vehicleOperationTime) calculateTotalCost(double[,] distanceMatrix,  Solution solution)
+
+
+
+(double totalCost, double totalPenalty, double costOfTrucks, double vehicleOperationTime) calculateTotalCost(double[,] distanceMatrix, Solution solution)
 {
     var routes = solution.Routes;
     double cost = 0.0;
@@ -60,15 +70,71 @@ foreach(var n in nbg)
                 }
             }
             vehicleTime += actualCity.ServiceTime;
-            if(vehicleTime > actualCity.TimeWindow.End)
+            if (vehicleTime > actualCity.TimeWindow.End)
             {
                 double toLatePenalty = Math.Min(actualCity.ServiceTime, vehicleTime - actualCity.TimeWindow.End);
                 penalty += toLatePenalty;
             }
         }
-        vehicleOperationTime += vehicleTime-route.StartTime;
+        vehicleOperationTime += vehicleTime - route.StartTime;
     }
     return (cost, penalty, costOfTrucks, vehicleOperationTime);
+}
+
+Solution TabuSearch(int MaxIterations, int TabuSize, Instance instance)
+{
+    var (greedyGTR, VehicleStarts) = createGreedyGTR(instance);
+    Solution bestSolution = generateGreedySolution(greedyGTR, VehicleStarts, instance.Vehicles);
+    bestSolution.calculateRoutesMetrics(instance.DistanceMatrix);
+    var bestObjective = bestSolution.TotalCost+bestSolution.TotalPenalty+bestSolution.TotalVehicleOperationTime;
+    Solution currentSolution = bestSolution;
+
+    Queue<Solution> tabuList = new Queue<Solution>();
+    int notImprovingIterations = 0;
+    for (int iter = 0; iter < MaxIterations; iter++)
+    {
+        Solution bestNeighbor = null;
+        double bestNeighborObjective = double.MaxValue;
+        var neighborhood = NeighborhoodGeneratorLocation.GenerateAllSwaps(currentSolution.Routes, instance.Vehicles, instance.DistanceMatrix);
+        foreach(var neighbor in neighborhood)
+        {
+            bool isTabu = tabuList.Any(tabuSolution => tabuSolution.Equals(neighbor));
+            var objective = neighbor.TotalCost + neighbor.TotalPenalty + neighbor.TotalVehicleOperationTime;
+            if (isTabu && objective >= bestObjective)
+                continue;
+
+            if (objective < bestNeighborObjective)
+            {
+                bestNeighborObjective = objective;
+                bestNeighbor = neighbor;
+            }
+        }
+        if (bestNeighbor == null)
+            break;
+        currentSolution = bestNeighbor;
+        if (bestNeighborObjective < bestObjective)
+        {
+            bestSolution = bestNeighbor;
+            bestObjective = bestNeighborObjective;
+            notImprovingIterations = 0;
+        }
+        else
+        {
+            notImprovingIterations++;
+        }
+        tabuList.Enqueue(currentSolution);
+        if (tabuList.Count > TabuSize)
+            tabuList.Dequeue();
+        if (notImprovingIterations >= 0.25 * MaxIterations)
+        {
+            notImprovingIterations = 0;
+            currentSolution = NeighborhoodGeneratorLocation.GenerateRandomSolution(currentSolution.Routes, instance.Vehicles, instance.DistanceMatrix);
+        }
+    }
+
+
+
+    return bestSolution;
 }
 
 Solution generateGreedySolution(List<Location> greedyGTR, List<double> vehicleStarts, List<Vehicle> Vehicles) //wprowadzic czekanie jezeli sie oplaca
@@ -84,7 +150,7 @@ Solution generateGreedySolution(List<Location> greedyGTR, List<double> vehicleSt
         currentLoad += loc.DemandMean;
         if (loc.Id == 0 && current.Count > 1)
         {
-            result.Add(new Route(Vehicles[numRoutes].Capacity, new List<Location>(current), vehicleStarts[numRoutes],currentLoad));
+            result.Add(new Route(Vehicles[numRoutes].Capacity, new List<Location>(current), vehicleStarts[numRoutes], currentLoad));
             current.Clear();
             currentLoad = 0.0;
             current.Add(loc); // zaczynamy nową trasę od bazy
@@ -97,9 +163,13 @@ Solution generateGreedySolution(List<Location> greedyGTR, List<double> vehicleSt
 
     return new Solution(result);
 }
-List<Location> createGreedyGTR(double[,] distanceMatrix, List<Location> locations, List<double> vehicleStarts, List<Vehicle> Vehicles)
+(List<Location> initialRoute, List<double> VehicleStarts) createGreedyGTR(Instance instance)
 {
+    double[,] distanceMatrix = instance.DistanceMatrix;
+    List<Location> locations = instance.Locations;
+    List<Vehicle> Vehicles = instance.Vehicles;
     var initialRoutesSplitted = new List<List<Location>>();
+    List<double> vehicleStarts = new List<double>();
     var initialRoute = new List<Location>();
     bool[] visited = new bool[locations.Count];
     int vehicleNumber = 0;
@@ -152,7 +222,7 @@ List<Location> createGreedyGTR(double[,] distanceMatrix, List<Location> location
                 initialRoute.Add(locations[0]);
                 vehicleNumber++;
                 if (vehicleNumber >= Vehicles.Count)
-                    return initialRoute;
+                    return (initialRoute, vehicleStarts);
                 break;
             }
             else if (nextCustomer == null && current.Id == 0)
@@ -192,7 +262,7 @@ List<Location> createGreedyGTR(double[,] distanceMatrix, List<Location> location
     {
         initialRoute.Add(locations[0]);
     }
-    return initialRoute;
+    return (initialRoute, vehicleStarts);
 }
 //ScenarioGenerator generator = new ScenarioGenerator(instance.Locations);
 //var scenarios = generator.GenerateManyScenarios(5);

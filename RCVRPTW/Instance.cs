@@ -20,6 +20,15 @@ namespace RCVRPTW
     {
         public List<Location> Locations { get; set; } = new List<Location>();
         public double[,] DistanceMatrix;
+        public List<Vehicle> Vehicles = new List<Vehicle>();
+        public Instance(string filename)
+        {
+            ParseSolomonFile(filename);
+            Vehicles.Add(new Vehicle(0, 90.0));
+            Vehicles.Add(new Vehicle(0, 90.0));
+            Vehicles.Add(new Vehicle(0, 90.0));
+            Vehicles.Add(new Vehicle(0, 90.0));
+        }
         public void ParseSolomonFile(string filePath)//typowy plik solomona
         {
             string[] lines = File.ReadAllLines(filePath);

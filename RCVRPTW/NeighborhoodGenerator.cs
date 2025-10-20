@@ -11,6 +11,83 @@ public static class NeighborhoodGeneratorLocation
     /// - pomiędzy wszystkimi parami tras.
     /// Każdy sąsiad to nowa lista tras (deep copy), z wykonanym jednym swapem.
     /// </summary>
+    /// 
+    public static void Shuffle<T>(IList<T> list, Random rng = null)
+    {
+        if (rng == null)
+            rng = new Random();
+
+        int n = list.Count;
+        if (n <= 2) return; // nie ma co tasować
+
+        // Tasujemy tylko elementy od indeksu 1 do n-2
+        for (int i = n - 2; i > 0; i--)
+        {
+            int k = rng.Next(1, i + 1); // losuj z zakresu [1, i]
+            T value = list[k];
+            list[k] = list[i];
+            list[i] = value;
+        }
+    }
+    public static Solution GenerateRandomSolution(List<Route> routes, List<Vehicle> vehicles, double[,] distanceMatrix)
+    {
+        bool invalidRoute = false;
+        int x = 0;
+        do
+        {
+            List<Location> allLocations = routes.SelectMany(route => route.Stops).ToList();
+            List<Location> neighbor = DeepCopyLocations(allLocations);
+
+            Shuffle(neighbor);
+            List<Route> nRoutes = new List<Route>();
+            List<Location> nLocations = new List<Location>();
+            var routeWeight = 0.0;
+            invalidRoute = false;
+            foreach (var location in neighbor)
+            {
+                if (location.Id == 0)
+                {
+                    if (nLocations.Count > 0)
+                    {
+                        var route = new Route(90, nLocations, 0, routeWeight);
+                        route.Stops.Add(allLocations[0]);
+                        route.Stops.Insert(0, allLocations[0]);
+                        (route.Cost, route.Penalty, route.vehicleOperationTime, route.StartTime) = bestStartTime(nLocations, distanceMatrix);
+                        nRoutes.Add(route);
+                        nLocations = new List<Location>();
+                        routeWeight = 0;
+                    }
+                }
+                else
+                {
+                    nLocations.Add(location);
+                    routeWeight += location.DemandMean;
+                }
+            }
+            foreach (var route in nRoutes)
+            {
+                if (route.CurrentLoad > vehicles[0].Capacity)
+                {
+                    x++;
+                    invalidRoute = true;
+                    break;
+                }
+            }
+            if (invalidRoute) continue;
+            var solution = new Solution(DeepCopyRoutes(nRoutes));
+            foreach (var route in solution.Routes)
+            {
+                solution.TotalPenalty += route.Penalty;
+                solution.TotalCost += route.Cost;
+                solution.TotalVehicleOperationTime += route.vehicleOperationTime;
+                solution.TotalMixedMetrics = solution.sumMetrics();
+            }
+            return solution;
+        } while (invalidRoute);
+
+        return null; 
+
+    }
     public static List<Solution> GenerateAllSwaps(List<Route> routes, List<Vehicle> vehicles, double[,] distanceMatrix)//pomyslec czy nie liczyc juz przy generowaniu mutacji zamiast poxniej
     {
         List<Solution> neighbors = new List<Solution>();
@@ -79,7 +156,7 @@ public static class NeighborhoodGeneratorLocation
             }
             neighbors.Add(solution);
         }
-        return neighbors.OrderBy(sol => sol.TotalMixedMetrics).ToList();
+        return neighbors.OrderBy(sol => sol.TotalCost).ToList();
     }
 
     public static (double bestCost, double bestPenalty, double bestVehicleOperationTime, double bestStartTime) bestStartTime(List<Location> stops, double[,] distanceMatrix)
