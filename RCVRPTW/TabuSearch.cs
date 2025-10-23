@@ -12,6 +12,7 @@ namespace RCVRPTW
         {
             Solution bestSolution = GreedyApproaches.generateGreedySolution(instance);
             bestSolution.calculateRoutesMetrics(instance.DistanceMatrix);
+            (double greedyTotalCost, double greedyTotalPenalty, double greedyVOT) GreedyMetrics = (bestSolution.TotalCost, bestSolution.TotalPenalty, bestSolution.TotalVehicleOperationTime);
             var bestObjective = bestSolution.TotalCost + bestSolution.TotalPenalty + bestSolution.TotalVehicleOperationTime;
             Solution currentSolution = bestSolution;
             Queue<Solution> tabuList = new Queue<Solution>();
@@ -55,6 +56,7 @@ namespace RCVRPTW
                     currentSolution = NeighborhoodGeneratorLocation.GenerateRandomSolution(currentSolution.Routes, instance.Vehicles, instance.DistanceMatrix);
                 }
             }
+            bestSolution.GreedyMetrics = GreedyMetrics;
             return bestSolution;
         }
     }

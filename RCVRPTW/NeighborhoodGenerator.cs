@@ -61,7 +61,7 @@ public static class NeighborhoodGeneratorLocation
                 else
                 {
                     nLocations.Add(location);
-                    routeWeight += location.DemandMean;
+                    routeWeight += location.Demand;
                 }
             }
             foreach (var route in nRoutes)
@@ -128,7 +128,7 @@ public static class NeighborhoodGeneratorLocation
                     else
                     {
                         nLocations.Add(location);
-                        routeWeight += location.DemandMean;
+                        routeWeight += location.Demand;
                     }
                 }
                 foreach(var route in nRoutes)

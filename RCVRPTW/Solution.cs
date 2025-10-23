@@ -43,6 +43,7 @@ public class Solution
 
     public double TotalVehicleOperationTime { get; set; }
     public double TotalMixedMetrics = 0.0;
+    public (double greedyTotalCost, double greedyTotalPenalty, double greedyVOT) GreedyMetrics { get; set; }
 
     public Solution(List<Route> routes)
     {

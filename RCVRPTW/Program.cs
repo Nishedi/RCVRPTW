@@ -1,75 +1,173 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
 using RCVRPTW;
+using System.Diagnostics;
 
-Instance instance = new Instance("pliki\\CTEST.txt");
+int[] iters = new[] { 100, 500, 2000 };
+int[] tabu = new[] { 10, 30, 50 };
+int numberScenarios = 10;
 
-for(int iterations = 10; iterations <= 10000; iterations *= 10)
-{
-    for(int tabuSize = 10; tabuSize <= 50; tabuSize += 10)
-    {
-        var startTime = DateTime.Now;
-        var res = TabuSearch.run(iterations, tabuSize, instance);
-        var endTime = DateTime.Now;
-        var duration = endTime - startTime;
-        Console.WriteLine($"{iterations} {tabuSize} {res.TotalCost+res.TotalPenalty+res.TotalVehicleOperationTime} {duration.TotalMilliseconds}");
-    }
-}
-
-//ScenarioGenerator generator = new ScenarioGenerator(instance.Locations);
-//var scenarios = generator.GenerateManyScenarios(5);
-//Console.WriteLine("Wygenerowane scenariusze zapotrzebowań:");
-//foreach (var scenario in scenarios)
-//{
-//    Console.WriteLine($"Scenariusz {scenario.ScenarioId}:");
-//    for (int i = 0; i < scenario.Demands.Count; i++)
-//    {
-//        Console.WriteLine($"  Lokalizacja {i}: Zapotrzebowanie = {scenario.Demands[i]:F2}");
-//    }
-//}
+var scenarios = InstanceGenerator.GenerateManyScenarios(10);
+var sw = Stopwatch.StartNew();
+var rawResults = ExperimentRunner.RunExperiments(scenarios, iters, tabu, repeats: 5, baseSeed: 42, parallel: true);
+Console.WriteLine($"\nAll experiments completed in {sw.Elapsed.TotalSeconds} seconds.");
 namespace RCVRPTW
 {
-    public class DemandScenario
+    public class Scenario
     {
-        public int ScenarioId { get; set; }
-        public List<double> Demands { get; set; } // Zapotrzebowania dla każdej lokalizacji-klienta
-
-        public DemandScenario(int scenarioId, List<double> demands)
+        public int ScenarioId { get; }
+        public Instance Instance { get; set; } 
+        public Scenario(int scenarioId, Instance instance)
         {
             ScenarioId = scenarioId;
-            Demands = demands;
+            Instance = instance;
         }
     }
 
-    public class ScenarioGenerator
+    public class InstanceGenerator
     {
         private List<Location> _locations;
 
-        public ScenarioGenerator(List<Location> locations)
+        public InstanceGenerator(List<Location> locations)
         {
             _locations = locations;
         }
 
-        public DemandScenario GenerateScenario(int scenarioId, Random rng)
+        public static Scenario GenerateInstance(int scenarioId, Random rng, string filename)
         {
-            var demands = new List<double>();
-            foreach (var loc in _locations)
-            {
-                if (loc.Type == LocationType.Depot)
-                    demands.Add(0.0);
-                else
-                    demands.Add(loc.SampleDemand(rng));
-            }
-            return new DemandScenario(scenarioId, demands);
+            var preparedInstance = new Instance(filename, 4, true, true);
+
+            return new Scenario(scenarioId, preparedInstance);
         }
 
-        public List<DemandScenario> GenerateManyScenarios(int count)
+        public static List<Scenario> GenerateManyScenarios(int count)
         {
             var rng = new Random();
-            var scenarios = new List<DemandScenario>();
+            var scenarios = new List<Scenario>();
             for (int i = 0; i < count; i++)
-                scenarios.Add(GenerateScenario(i, rng));
+                scenarios.Add(GenerateInstance(i, rng, "..\\..\\..\\pliki\\CTEST.txt"));
             return scenarios;
+        }
+    }
+}
+public class ExperimentResult
+{
+    public int ScenarioId { get; set; }
+    public int Iterations { get; set; }
+    public int TabuSize { get; set; }
+    public int Repeat { get; set; }
+    public int Seed { get; set; }
+
+    public double GreedyObjective { get; set; }
+
+    public double Objective { get; set; } // total cost + penalty + vehicleOpTime
+    public double TotalCost { get; set; }
+    public double TotalPenalty { get; set; }
+    public double TotalVehicleOperationTime { get; set; }
+    public int RoutesCount { get; set; }
+    public double DurationMs { get; set; }
+}
+
+
+
+public static class ExperimentRunner
+{
+    // Uruchamia eksperymenty i zwraca listę surowych wyników
+    public static List<ExperimentResult> RunExperiments(
+        List<Scenario> scenarios,
+        int[] iterationsGrid,
+        int[] tabuSizeGrid,
+        int repeats = 5,
+        int baseSeed = 12345,
+        bool parallel = true)
+    {
+        var results = new List<ExperimentResult>();
+        var lockObj = new object();
+
+        var tasks = new List<Action>();
+        Console.WriteLine("Starting experiments..."+scenarios.Count*iterationsGrid.Length*tabuSizeGrid.Length*repeats);
+        foreach (var scen in scenarios)
+        {
+            for (int it = 0; it < iterationsGrid.Length; it++)
+                for (int ts = 0; ts < tabuSizeGrid.Length; ts++)
+                {
+                    int iterations = iterationsGrid[it];
+                    int tabuSize = tabuSizeGrid[ts];
+
+                    for (int rep = 0; rep < repeats; rep++)
+                    {
+                        int seed = baseSeed + scen.ScenarioId * 1000 + iterations * 10 + tabuSize * 100 + rep;
+                        Action work = () =>
+                        {
+                            var rng = new Random(seed);
+                            var sw = Stopwatch.StartNew();
+                            
+                            var instance = scen.Instance;
+                            var solution = TabuSearch.run(iterations, tabuSize, instance); 
+                            sw.Stop();
+
+                            var res = new ExperimentResult
+                            {
+                                ScenarioId = scen.ScenarioId,
+                                Iterations = iterations,
+                                TabuSize = tabuSize,
+                                Repeat = rep,
+                                Seed = seed,
+                                GreedyObjective = solution.GreedyMetrics.greedyTotalCost + solution.GreedyMetrics.greedyTotalPenalty + solution.GreedyMetrics.greedyVOT,
+                                Objective = solution.TotalCost + solution.TotalPenalty + solution.TotalVehicleOperationTime,
+                                TotalCost = solution.TotalCost,
+                                TotalPenalty = solution.TotalPenalty,
+                                TotalVehicleOperationTime = solution.TotalVehicleOperationTime,
+                                RoutesCount = solution.Routes.Count,
+                                DurationMs = sw.Elapsed.TotalMilliseconds,
+                            };
+
+                            lock (lockObj)
+                            {
+                                results.Add(res);
+                                AppendResultToCsv("..\\..\\..\\results_raw.csv", res);
+                            }
+                        };
+
+                        tasks.Add(work);
+                    }
+                }
+        }
+
+        int total = tasks.Count;
+        int completed = 0;
+
+        if (parallel)
+        {
+            Parallel.ForEach(tasks, t =>
+            {
+                t();
+                int now = System.Threading.Interlocked.Increment(ref completed);
+                Console.Write($"\rDone {now}/{total}");
+            });
+        }
+        else
+        {
+            foreach (var t in tasks)
+            {
+                t();
+                int now = System.Threading.Interlocked.Increment(ref completed);
+                
+                Console.Write($"\rDone {now}/{total}");
+            }
+        }
+
+        return results;
+    }
+
+    private static void AppendResultToCsv(string path, ExperimentResult res)
+    {
+        var header = "ScenarioId,Iterations,TabuSize,Repeat,Seed,GreedyOjective,Objective,TotalCost,TotalPenalty,TotalVehicleOperationTime,RoutesCount,DurationMs";
+        var exists = File.Exists(path);
+        using (var sw = new StreamWriter(path, append: true))
+        {
+            if (!exists) sw.WriteLine(header);
+            sw.WriteLine($"{res.ScenarioId},{res.Iterations},{res.TabuSize},{res.Repeat},{res.Seed},{res.GreedyObjective},{res.Objective},{res.TotalCost},{res.TotalPenalty},{res.TotalVehicleOperationTime},{res.RoutesCount},{res.DurationMs}");
         }
     }
 }

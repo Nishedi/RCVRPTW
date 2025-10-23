@@ -19,7 +19,7 @@ namespace RCVRPTW
             foreach (var loc in greedyGTR)
             {
                 current.Add(loc);
-                currentLoad += loc.DemandMean;
+                currentLoad += loc.Demand;
                 if (loc.Id == 0 && current.Count > 1)
                 {
                     result.Add(new Route(instance.Vehicles[numRoutes].Capacity, new List<Location>(current), vehicleStarts[numRoutes], currentLoad));
@@ -66,7 +66,7 @@ namespace RCVRPTW
                     {
                         if (!visited[location.Id] && location.Id != 0)
                         {
-                            double demand = location.DemandMean;
+                            double demand = location.Demand;
                             double vehicleCapacity = Vehicles[vehicleNumber].Capacity;
 
                             // UWAGA: sprawdzamy czy możemy dodać klienta do aktualnego pojazdu
@@ -101,7 +101,7 @@ namespace RCVRPTW
                     {
                         foreach (var location in locations)
                         {
-                            if (!visited[location.Id] && currentLoad + location.DemandMean <= Vehicles[vehicleNumber].Capacity)
+                            if (!visited[location.Id] && currentLoad + location.Demand <= Vehicles[vehicleNumber].Capacity)
                             {
                                 nextCustomer = location;
                                 break;
@@ -124,7 +124,7 @@ namespace RCVRPTW
 
                     initialRoute.Add(nextCustomer);
                     visited[nextCustomer.Id] = true;
-                    currentLoad += nextCustomer.DemandMean; // AKTUALIZUJ bieżący załadunek!
+                    currentLoad += nextCustomer.Demand; // AKTUALIZUJ bieżący załadunek!
 
                     current = nextCustomer;
                 }

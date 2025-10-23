@@ -16,20 +16,21 @@ using System.Threading.Tasks;
 //public int Priority { get; set; }
 namespace RCVRPTW
 {
-    internal class Instance
+    public  class Instance
     {
         public List<Location> Locations { get; set; } = new List<Location>();
         public double[,] DistanceMatrix;
         public List<Vehicle> Vehicles = new List<Vehicle>();
-        public Instance(string filename)
+        public Instance(string filename, int vehicleNumbers=4, bool randomDemands = false, bool randomTimeWindow = false)
         {
-            ParseSolomonFile(filename);
-            Vehicles.Add(new Vehicle(0, 90.0));
-            Vehicles.Add(new Vehicle(0, 90.0));
-            Vehicles.Add(new Vehicle(0, 90.0));
-            Vehicles.Add(new Vehicle(0, 90.0));
+            ParseSolomonFile(filename, randomDemands, randomTimeWindow);
+            for(int i = 0; i < vehicleNumbers; i++)
+            {
+                Vehicles.Add(new Vehicle(0, 90.0));
+            }
         }
-        public void ParseSolomonFile(string filePath)//typowy plik solomona
+
+        public void ParseSolomonFile(string filePath, bool randomDemands, bool randomTimeWindow)//typowy plik solomona
         {
             string[] lines = File.ReadAllLines(filePath);
             foreach (var line in lines)
@@ -48,8 +49,10 @@ namespace RCVRPTW
                         double.Parse(parts[3], CultureInfo.InvariantCulture),
                         double.Parse(parts[3], CultureInfo.InvariantCulture) * 0.2, // odchylenie
                         ((int)double.Parse(parts[4], CultureInfo.InvariantCulture), (int)double.Parse(parts[5], CultureInfo.InvariantCulture)),
+                        (double.Parse(parts[4], CultureInfo.InvariantCulture) * 0.1, double.Parse(parts[5], CultureInfo.InvariantCulture) * 0.1),
                         (int)double.Parse(parts[6], CultureInfo.InvariantCulture),
-                        1
+
+                        1,randomDemands,randomTimeWindow
                     ));
 
                 }
