@@ -21,8 +21,10 @@ namespace RCVRPTW
         public List<Location> Locations { get; set; } = new List<Location>();
         public double[,] DistanceMatrix;
         public List<Vehicle> Vehicles = new List<Vehicle>();
+        public string FileName;
         public Instance(string filename, int vehicleNumbers=4, bool randomDemands = false, bool randomTimeWindow = false)
         {
+            FileName = filename;
             ParseSolomonFile(filename, randomDemands, randomTimeWindow);
             for(int i = 0; i < vehicleNumbers; i++)
             {

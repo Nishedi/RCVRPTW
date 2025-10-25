@@ -3,14 +3,29 @@
 using RCVRPTW;
 using System.Diagnostics;
 
-int[] iters = new[] { 100, 500, 2000 };
-int[] tabu = new[] { 10, 30, 50 };
-int numberScenarios = 10;
+int[] iters = new[] { /*100, 500, 2000*/1000 };
+int[] tabu = new[] { /*10, 30,*/ 50 };
+int numberScenarios = 1000;
+string[] fileNames = new[] { "pliki//100 lokacji//C101.txt", "pliki//100 lokacji//C201.txt", "pliki//100 lokacji//R101.txt", "pliki//100 lokacji//R201.txt",
+    "pliki//100 lokacji//RC101.txt", "pliki//100 lokacji//RC201.txt",
+    //"pliki//200 lokacji//C1_2_2_o.TXT", "pliki//200 lokacji//C2_2_2_o.TXT", "pliki//200 lokacji//C1_2_2_o.TXT", "pliki//200 lokacji//R1_2_1_o.TXT",
+    //"pliki//200 lokacji//R2_2_1_o.TXT", "pliki//200 lokacji//RC1_2_1_o.TXT", "pliki//200 lokacji//RC2_2_1_o.TXT"
+};
 
-var scenarios = InstanceGenerator.GenerateManyScenarios(10);
+var scenarios = InstanceGenerator.GenerateManyScenarios(numberScenarios,fileNames);
 var sw = Stopwatch.StartNew();
-var rawResults = ExperimentRunner.RunExperiments(scenarios, iters, tabu, repeats: 5, baseSeed: 42, parallel: true);
+var rawResults = ExperimentRunner.RunExperiments(scenarios, iters, tabu, repeats: 2, baseSeed: 42, parallel: true);
 Console.WriteLine($"\nAll experiments completed in {sw.Elapsed.TotalSeconds} seconds.");
+
+
+var features = scenarios.Select(s => ScenarioAnalyzer.ExtractFeatures(s)).ToList();
+var mapping = ScenarioAnalyzer.KMeansCluster(features, k: 3);
+
+var groupedByCluster = rawResults.GroupBy(r => mapping[r.ScenarioId]);
+foreach (var g in groupedByCluster)
+{
+    Console.WriteLine($"Cluster {g.Key}: runs={g.Count()}, mean objective={g.Average(x => x.Objective)}");
+}
 namespace RCVRPTW
 {
     public class Scenario
@@ -40,134 +55,14 @@ namespace RCVRPTW
             return new Scenario(scenarioId, preparedInstance);
         }
 
-        public static List<Scenario> GenerateManyScenarios(int count)
+        public static List<Scenario> GenerateManyScenarios(int numScenariosPerFile, string[] FileNames)
         {
             var rng = new Random();
             var scenarios = new List<Scenario>();
-            for (int i = 0; i < count; i++)
-                scenarios.Add(GenerateInstance(i, rng, "..\\..\\..\\pliki\\CTEST.txt"));
+            foreach (var filename in FileNames)
+                for (int i = 0; i < numScenariosPerFile; i++)
+                    scenarios.Add(GenerateInstance(i, rng, filename));
             return scenarios;
-        }
-    }
-}
-public class ExperimentResult
-{
-    public int ScenarioId { get; set; }
-    public int Iterations { get; set; }
-    public int TabuSize { get; set; }
-    public int Repeat { get; set; }
-    public int Seed { get; set; }
-
-    public double GreedyObjective { get; set; }
-
-    public double Objective { get; set; } // total cost + penalty + vehicleOpTime
-    public double TotalCost { get; set; }
-    public double TotalPenalty { get; set; }
-    public double TotalVehicleOperationTime { get; set; }
-    public int RoutesCount { get; set; }
-    public double DurationMs { get; set; }
-}
-
-
-
-public static class ExperimentRunner
-{
-    // Uruchamia eksperymenty i zwraca listę surowych wyników
-    public static List<ExperimentResult> RunExperiments(
-        List<Scenario> scenarios,
-        int[] iterationsGrid,
-        int[] tabuSizeGrid,
-        int repeats = 5,
-        int baseSeed = 12345,
-        bool parallel = true)
-    {
-        var results = new List<ExperimentResult>();
-        var lockObj = new object();
-
-        var tasks = new List<Action>();
-        Console.WriteLine("Starting experiments..."+scenarios.Count*iterationsGrid.Length*tabuSizeGrid.Length*repeats);
-        foreach (var scen in scenarios)
-        {
-            for (int it = 0; it < iterationsGrid.Length; it++)
-                for (int ts = 0; ts < tabuSizeGrid.Length; ts++)
-                {
-                    int iterations = iterationsGrid[it];
-                    int tabuSize = tabuSizeGrid[ts];
-
-                    for (int rep = 0; rep < repeats; rep++)
-                    {
-                        int seed = baseSeed + scen.ScenarioId * 1000 + iterations * 10 + tabuSize * 100 + rep;
-                        Action work = () =>
-                        {
-                            var rng = new Random(seed);
-                            var sw = Stopwatch.StartNew();
-                            
-                            var instance = scen.Instance;
-                            var solution = TabuSearch.run(iterations, tabuSize, instance); 
-                            sw.Stop();
-
-                            var res = new ExperimentResult
-                            {
-                                ScenarioId = scen.ScenarioId,
-                                Iterations = iterations,
-                                TabuSize = tabuSize,
-                                Repeat = rep,
-                                Seed = seed,
-                                GreedyObjective = solution.GreedyMetrics.greedyTotalCost + solution.GreedyMetrics.greedyTotalPenalty + solution.GreedyMetrics.greedyVOT,
-                                Objective = solution.TotalCost + solution.TotalPenalty + solution.TotalVehicleOperationTime,
-                                TotalCost = solution.TotalCost,
-                                TotalPenalty = solution.TotalPenalty,
-                                TotalVehicleOperationTime = solution.TotalVehicleOperationTime,
-                                RoutesCount = solution.Routes.Count,
-                                DurationMs = sw.Elapsed.TotalMilliseconds,
-                            };
-
-                            lock (lockObj)
-                            {
-                                results.Add(res);
-                                AppendResultToCsv("..\\..\\..\\results_raw.csv", res);
-                            }
-                        };
-
-                        tasks.Add(work);
-                    }
-                }
-        }
-
-        int total = tasks.Count;
-        int completed = 0;
-
-        if (parallel)
-        {
-            Parallel.ForEach(tasks, t =>
-            {
-                t();
-                int now = System.Threading.Interlocked.Increment(ref completed);
-                Console.Write($"\rDone {now}/{total}");
-            });
-        }
-        else
-        {
-            foreach (var t in tasks)
-            {
-                t();
-                int now = System.Threading.Interlocked.Increment(ref completed);
-                
-                Console.Write($"\rDone {now}/{total}");
-            }
-        }
-
-        return results;
-    }
-
-    private static void AppendResultToCsv(string path, ExperimentResult res)
-    {
-        var header = "ScenarioId,Iterations,TabuSize,Repeat,Seed,GreedyOjective,Objective,TotalCost,TotalPenalty,TotalVehicleOperationTime,RoutesCount,DurationMs";
-        var exists = File.Exists(path);
-        using (var sw = new StreamWriter(path, append: true))
-        {
-            if (!exists) sw.WriteLine(header);
-            sw.WriteLine($"{res.ScenarioId},{res.Iterations},{res.TabuSize},{res.Repeat},{res.Seed},{res.GreedyObjective},{res.Objective},{res.TotalCost},{res.TotalPenalty},{res.TotalVehicleOperationTime},{res.RoutesCount},{res.DurationMs}");
         }
     }
 }
