@@ -52,6 +52,7 @@ namespace RCVRPTW
                     tabuList.Dequeue();
                 if (notImprovingIterations >= 0.25 * MaxIterations)
                 {
+                    Console.Write("XD!");
                     notImprovingIterations = 0;
                     currentSolution = NeighborhoodGeneratorLocation.GenerateRandomSolution(currentSolution.Routes, instance.Vehicles, instance.DistanceMatrix);
                 }

@@ -22,7 +22,7 @@ namespace RCVRPTW
         public double[,] DistanceMatrix;
         public List<Vehicle> Vehicles = new List<Vehicle>();
         public string FileName;
-        public Instance(string filename, int vehicleNumbers=4, bool randomDemands = false, bool randomTimeWindow = false)
+        public Instance(string filename, int vehicleNumbers=100, bool randomDemands = false, bool randomTimeWindow = false)
         {
             FileName = filename;
             ParseSolomonFile(filename, randomDemands, randomTimeWindow);

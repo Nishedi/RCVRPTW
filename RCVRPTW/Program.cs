@@ -3,18 +3,19 @@
 using RCVRPTW;
 using System.Diagnostics;
 
-int[] iters = new[] { /*100, 500, 2000*/1000 };
-int[] tabu = new[] { /*10, 30,*/ 50 };
-int numberScenarios = 1000;
-string[] fileNames = new[] { "pliki//100 lokacji//C101.txt", "pliki//100 lokacji//C201.txt", "pliki//100 lokacji//R101.txt", "pliki//100 lokacji//R201.txt",
-    "pliki//100 lokacji//RC101.txt", "pliki//100 lokacji//RC201.txt",
+int[] iters = new[] { /*100, 500, 2000*/2000 };
+int[] tabu = new[] { 10, 20, 30, 40, 50 };
+int numberScenarios = 1;
+string[] fileNames = new[] { "pliki//100 lokacji//C101.txt", 
+    //"pliki//100 lokacji//C201.txt", "pliki//100 lokacji//R101.txt", "pliki//100 lokacji//R201.txt",
+    //"pliki//100 lokacji//RC101.txt", "pliki//100 lokacji//RC201.txt",
     //"pliki//200 lokacji//C1_2_2_o.TXT", "pliki//200 lokacji//C2_2_2_o.TXT", "pliki//200 lokacji//C1_2_2_o.TXT", "pliki//200 lokacji//R1_2_1_o.TXT",
     //"pliki//200 lokacji//R2_2_1_o.TXT", "pliki//200 lokacji//RC1_2_1_o.TXT", "pliki//200 lokacji//RC2_2_1_o.TXT"
 };
 
 var scenarios = InstanceGenerator.GenerateManyScenarios(numberScenarios,fileNames);
 var sw = Stopwatch.StartNew();
-var rawResults = ExperimentRunner.RunExperiments(scenarios, iters, tabu, repeats: 2, baseSeed: 42, parallel: true);
+var rawResults = ExperimentRunner.RunExperiments(scenarios, iters, tabu, repeats:2, baseSeed: 42, parallel: true);
 Console.WriteLine($"\nAll experiments completed in {sw.Elapsed.TotalSeconds} seconds.");
 
 
