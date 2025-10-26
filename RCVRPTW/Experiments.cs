@@ -18,6 +18,7 @@ namespace RCVRPTW
         public List<int> GTR {  get; set; }
 
         public double GreedyObjective { get; set; }
+        public string MutationType { get; set; }
 
         public double Objective { get; set; } // total cost + penalty + vehicleOpTime
         public double TotalCost { get; set; }
@@ -35,6 +36,7 @@ namespace RCVRPTW
             List<Scenario> scenarios,
             int[] iterationsGrid,
             int[] tabuSizeGrid,
+            string[] mutationtypes,
             int repeats = 5,
             int baseSeed = 12345,
             bool parallel = true)
@@ -43,53 +45,57 @@ namespace RCVRPTW
             var lockObj = new object();
 
             var tasks = new List<Action>();
-            Console.WriteLine("Starting experiments..." + scenarios.Count * iterationsGrid.Length * tabuSizeGrid.Length * repeats);
+            Console.WriteLine("Starting experiments..." + scenarios.Count * iterationsGrid.Length * tabuSizeGrid.Length * repeats * mutationtypes.Length);
             foreach (var scen in scenarios)
             {
                 for (int it = 0; it < iterationsGrid.Length; it++)
                     for (int ts = 0; ts < tabuSizeGrid.Length; ts++)
                     {
-                        int iterations = iterationsGrid[it];
-                        int tabuSize = tabuSizeGrid[ts];
-
-                        for (int rep = 0; rep < repeats; rep++)
+                        foreach (var mutationtype in mutationtypes)
                         {
-                            int seed = baseSeed + scen.ScenarioId * 1000 + iterations * 10 + tabuSize * 100 + rep;
-                            Action work = () =>
-                            {
-                                var rng = new Random(seed);
-                                var sw = Stopwatch.StartNew();
+                            int iterations = iterationsGrid[it];
+                            int tabuSize = tabuSizeGrid[ts];
 
-                                var instance = scen.Instance;
-                                var solution = TabuSearch.run(iterations, tabuSize, instance);
-                                sw.Stop();
-                                
-                                var res = new ExperimentResult
+                            for (int rep = 0; rep < repeats; rep++)
+                            {
+                                int seed = baseSeed + scen.ScenarioId * 1000 + iterations * 10 + tabuSize * 100 + rep;
+                                Action work = () =>
                                 {
-                                    ScenarioId = scen.ScenarioId,
-                                    FileName = scen.Instance.FileName,
-                                    Iterations = iterations,
-                                    TabuSize = tabuSize,
-                                    Repeat = rep,
-                                    Seed = seed,
-                                    GreedyObjective = solution.GreedyMetrics.greedyTotalCost + solution.GreedyMetrics.greedyTotalPenalty + solution.GreedyMetrics.greedyVOT,
-                                    Objective = solution.TotalCost + solution.TotalPenalty + solution.TotalVehicleOperationTime,
-                                    TotalCost = solution.TotalCost,
-                                    TotalPenalty = solution.TotalPenalty,
-                                    TotalVehicleOperationTime = solution.TotalVehicleOperationTime,
-                                    RoutesCount = solution.Routes.Count,
-                                    DurationMs = sw.Elapsed.TotalMilliseconds,
-                                    GTR = solution.Routes.SelectMany(r => r.Stops).Select(loc => loc.Id).ToList()
+                                    var rng = new Random(seed);
+                                    var sw = Stopwatch.StartNew();
+
+                                    var instance = scen.Instance;
+                                    var solution = TabuSearch.run(iterations, tabuSize, instance, mutationtype);
+                                    sw.Stop();
+
+                                    var res = new ExperimentResult
+                                    {
+                                        ScenarioId = scen.ScenarioId,
+                                        FileName = scen.Instance.FileName,
+                                        Iterations = iterations,
+                                        TabuSize = tabuSize,
+                                        MutationType = mutationtype,
+                                        Repeat = rep,
+                                        Seed = seed,
+                                        GreedyObjective = solution.GreedyMetrics.greedyTotalCost + solution.GreedyMetrics.greedyTotalPenalty + solution.GreedyMetrics.greedyVOT,
+                                        Objective = solution.TotalCost + solution.TotalPenalty + solution.TotalVehicleOperationTime,
+                                        TotalCost = solution.TotalCost,
+                                        TotalPenalty = solution.TotalPenalty,
+                                        TotalVehicleOperationTime = solution.TotalVehicleOperationTime,
+                                        RoutesCount = solution.Routes.Count,
+                                        DurationMs = sw.Elapsed.TotalMilliseconds,
+                                        GTR = solution.Routes.SelectMany(r => r.Stops).Select(loc => loc.Id).ToList()
+                                    };
+
+                                    lock (lockObj)
+                                    {
+                                        results.Add(res);
+                                        AppendResultToCsv("results_raw.csv", res);
+                                    }
                                 };
 
-                                lock (lockObj)
-                                {
-                                    results.Add(res);
-                                    AppendResultToCsv("results_raw.csv", res);
-                                }
-                            };
-
-                            tasks.Add(work);
+                                tasks.Add(work);
+                            }
                         }
                     }
             }
@@ -122,12 +128,12 @@ namespace RCVRPTW
 
         private static void AppendResultToCsv(string path, ExperimentResult res)
         {
-            var header = "ScenarioId;Filename;Iterations;TabuSize;Repeat;Seed;GreedyOjective;Objective;TotalCost;TotalPenalty;TotalVehicleOperationTime;RoutesCount;DurationMs;GTR";
+            var header = "ScenarioId;Filename;Iterations;TabuSize;MutationType;Repeat;Seed;GreedyOjective;Objective;TotalCost;TotalPenalty;TotalVehicleOperationTime;RoutesCount;DurationMs;GTR";
             var exists = File.Exists(path);
             using (var sw = new StreamWriter(path, append: true))
             {
                 if (!exists) sw.WriteLine(header);
-                string result = $"{res.ScenarioId};{res.FileName};{res.Iterations};{res.TabuSize};{res.Repeat};{res.Seed};{res.GreedyObjective};{res.Objective};{res.TotalCost};{res.TotalPenalty};{res.TotalVehicleOperationTime};{res.RoutesCount};{res.DurationMs};{string.Join(",", res.GTR)}";
+                string result = $"{res.ScenarioId};{res.FileName};{res.Iterations};{res.TabuSize};{res.MutationType};{res.Repeat};{res.Seed};{res.GreedyObjective};{res.Objective};{res.TotalCost};{res.TotalPenalty};{res.TotalVehicleOperationTime};{res.RoutesCount};{res.DurationMs};{string.Join(",", res.GTR)}";
                 //Console.WriteLine($"{res.FileName}:{res.DurationMs}");
                 sw.WriteLine(result);
             }

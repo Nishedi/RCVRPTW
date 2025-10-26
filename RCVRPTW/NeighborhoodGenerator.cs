@@ -1,5 +1,6 @@
 ﻿using RCVRPTW;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using static System.Formats.Asn1.AsnWriter;
 
@@ -29,12 +30,13 @@ public static class NeighborhoodGeneratorLocation
             list[i] = value;
         }
     }
-    public static Solution GenerateRandomSolution(List<Route> routes, List<Vehicle> vehicles, double[,] distanceMatrix)
+    public static Solution GenerateRandomSolutionL(List<Route> routes, List<Vehicle> vehicles, double[,] distanceMatrix)
     {
         bool invalidRoute = false;
         int x = 0;
         do
         {
+
             List<Location> allLocations = routes.SelectMany(route => route.Stops).ToList();
             List<Location> neighbor = DeepCopyLocations(allLocations);
 
@@ -88,7 +90,226 @@ public static class NeighborhoodGeneratorLocation
         return null; 
 
     }
-    public static List<Solution> GenerateAllSwaps(List<Route> routes, List<Vehicle> vehicles, double[,] distanceMatrix)//pomyslec czy nie liczyc juz przy generowaniu mutacji zamiast poxniej
+
+    public static Solution GenerateRandomSolution(List<Route> routes, List<Vehicle> vehicles, double[,] distanceMatrix)
+    {
+        bool invalidRoute = false;
+        int x = 0;
+        do
+        {
+            Location first = routes[0].Stops[0];
+            var allLocations = routes
+                .SelectMany(r => r.Stops)
+                .Where(s => s.Id != 0)
+                .ToList();
+            List<Location> neighbor = DeepCopyLocations(allLocations);
+            neighbor.Insert(0, first);
+            neighbor.Add(first);
+
+
+
+
+            Shuffle(neighbor);
+            List<Route> nRoutes = new List<Route>();
+            List<Location> nLocations = new List<Location>();
+            var routeWeight = 0.0;
+            invalidRoute = false;
+            foreach (var location in neighbor)
+            {
+                if (location.Id == 0)
+                {
+                    if (nLocations.Count > 0)
+                    {
+                        var route = new Route(90, nLocations, 0, routeWeight);
+                        route.Stops.Add(first);
+                        route.Stops.Insert(0, first);
+                        (route.Cost, route.Penalty, route.vehicleOperationTime, route.StartTime) = bestStartTime(nLocations, distanceMatrix);
+                        nRoutes.Add(route);
+                        nLocations = new List<Location>();
+                        routeWeight = 0;
+                    }
+                }
+                else if(routeWeight + location.Demand > vehicles[0].Capacity)
+                {
+                    var route = new Route(90, nLocations, 0, routeWeight);
+                    route.Stops.Add(first   );
+                    route.Stops.Insert(0, first);
+                    (route.Cost, route.Penalty, route.vehicleOperationTime, route.StartTime) = bestStartTime(nLocations, distanceMatrix);
+                    nRoutes.Add(route);
+                    nLocations = new List<Location>();
+                    nLocations.Add(location);
+                    routeWeight = location.Demand;
+
+                }
+                else
+                {
+                    nLocations.Add(location);
+                    routeWeight += location.Demand;
+                }
+            }
+            foreach (var route in nRoutes)
+            {
+                if (route.CurrentLoad > vehicles[0].Capacity)
+                {
+                    x++;
+                    invalidRoute = true;
+                    break;
+                }
+            }
+            if (invalidRoute) continue;
+            var solution = new Solution(DeepCopyRoutes(nRoutes));
+            foreach (var route in solution.Routes)
+            {
+                solution.TotalPenalty += route.Penalty;
+                solution.TotalCost += route.Cost;
+                solution.TotalVehicleOperationTime += route.vehicleOperationTime;
+                solution.TotalMixedMetrics = solution.sumMetrics();
+            }
+            return solution;
+        } while (invalidRoute);
+
+        return null;
+
+    }
+
+
+    public static List<Location> swap(List<Location> locations, int i, int j)
+    {
+        List<Location> neighbor = DeepCopyLocations(locations);
+        Location tempLocation = neighbor[j];
+        neighbor[j] = neighbor[i];
+        neighbor[i] = tempLocation;
+        return neighbor;
+    }
+
+    public static List<Location> invert(List<Location> locations, int i, int j)
+    {
+        List<Location> neighbor = DeepCopyLocations(locations);
+        while (i < j)
+        {
+            Location tempLocation = neighbor[j];
+            neighbor[j] = neighbor[i];
+            neighbor[i] = tempLocation;
+            i++;
+            j--;
+        }
+        return neighbor;
+    }
+
+    public static List<Location> insert(List<Location> locations, int i, int j)
+    {
+        List<Location> neighbor = DeepCopyLocations(locations);
+        Location tempLocation = neighbor[i];
+        neighbor.RemoveAt(i);
+        neighbor.Insert(j, tempLocation);
+        return neighbor;
+    }
+
+    public static List<Solution> GenerateAllSwaps(List<Route> routes, List<Vehicle> vehicles, double[,] distanceMatrix, string mutationType)
+    {
+        var neighborsBag = new ConcurrentBag<Solution>();
+
+        // Zbiór wszystkich lokacji (w tym depot jako element o Id==0?)
+        List<Location> allLocations = routes.SelectMany(route => route.Stops).ToList();
+
+        // ensure depot repeated as in original code
+        for (int k = 0; k < 5; k++)
+            allLocations.Add(allLocations[0]);
+
+        int count = allLocations.Count;
+        var depot = allLocations[0];
+
+        // równoległe przetwarzanie par (i,j)
+        Parallel.For(1, count - 1, i =>
+        {
+            // Każdy wątek wykonuje wewnętrzną pętlę sekwencyjnie
+            for (int j = i + 1; j < count - 1; j++)
+            {
+                if (i == j) continue;
+
+                // DeepCopyLocations zakładamy, że jest bezpieczne do równoległego użycia
+                List<Location> neighbor = DeepCopyLocations(allLocations);
+
+                if (mutationType == "insert")
+                    neighbor = insert(neighbor, i, j);
+                else if (mutationType == "invert")
+                    neighbor = invert(neighbor, i, j);
+                else if (mutationType == "swap")
+                    neighbor = swap(neighbor, i, j);
+                else
+                    neighbor = swap(neighbor, i, j); // przypisanie wyniku swap w przypadku default
+
+                List<Route> nRoutes = new List<Route>();
+                List<Location> nLocations = new List<Location>();
+                var routeWeight = 0.0;
+                bool invalidRoute = false;
+
+                // budowanie tras z listy lokacji
+                foreach (var location in neighbor)
+                {
+                    if (location.Id == 0)
+                    {
+                        if (nLocations.Count > 0)
+                        {
+                            var route = new Route(90, nLocations, 0, routeWeight);
+                            // dodaj depot na poczatek i koniec trasy
+                            route.Stops.Insert(0, depot);
+                            route.Stops.Add(depot);
+
+                            // oblicz metryki trasy (zakladamy, ze bestStartTime jest bezpieczne)
+                            (route.Cost, route.Penalty, route.vehicleOperationTime, route.StartTime) = bestStartTime(nLocations, distanceMatrix);
+
+                            nRoutes.Add(route);
+
+                            nLocations = new List<Location>();
+                            routeWeight = 0;
+                        }
+                    }
+                    else
+                    {
+                        nLocations.Add(location);
+                        routeWeight += location.Demand;
+                    }
+                }
+
+                // sprawdź ograniczenia pojemności
+                foreach (var route in nRoutes)
+                {
+                    if (route.CurrentLoad > vehicles[0].Capacity)
+                    {
+                        invalidRoute = true;
+                        break;
+                    }
+                }
+
+                if (!invalidRoute && nRoutes.Count > 0)
+                {
+                    // stwórz Solution i policz sumy (lokalnie, w wątku)
+                    var solution = new Solution(DeepCopyRoutes(nRoutes));
+                    // reset pól jeśli konstruktor ich nie zeruje
+                    solution.TotalPenalty = 0;
+                    solution.TotalCost = 0;
+                    solution.TotalVehicleOperationTime = 0;
+                    solution.TotalMixedMetrics = 0;
+
+                    foreach (var route in solution.Routes)
+                    {
+                        solution.TotalPenalty += route.Penalty;
+                        solution.TotalCost += route.Cost;
+                        solution.TotalVehicleOperationTime += route.vehicleOperationTime;
+                    }
+                    solution.TotalMixedMetrics = solution.sumMetrics();
+
+                    neighborsBag.Add(solution);
+                }
+            }
+        });
+
+        // na koniec zbierz wyniki i posortuj
+        var neighbors = neighborsBag.OrderBy(sol => sol.TotalCost).ToList();
+        return neighbors;
+    }
+    public static List<Solution> GenerateAllSwaps_not_parrarel(List<Route> routes, List<Vehicle> vehicles, double[,] distanceMatrix, string mutationType)//pomyslec czy nie liczyc juz przy generowaniu mutacji zamiast poxniej
     {
         List<Solution> neighbors = new List<Solution>();
         var routeNeighbors = new List<List<Route>>();
@@ -103,10 +324,15 @@ public static class NeighborhoodGeneratorLocation
             {
                 if (i == j) continue;
                 List<Location> neighbor = DeepCopyLocations(allLocations);
-                Location tempLocation = neighbor[j];
-                neighbor[j] = neighbor[i];
-                neighbor[i] = tempLocation;
-                List <Route> nRoutes = new List<Route>();
+                if(mutationType == "insert")
+                    neighbor = insert(neighbor, i, j);
+                else if (mutationType == "invert")
+                    neighbor = invert(neighbor, i, j);
+                else if (mutationType == "swap")
+                    neighbor = swap(neighbor, i, j);
+                else 
+                    swap(neighbor, i, j);
+                List<Route> nRoutes = new List<Route>();
                 List<Location> nLocations = new List<Location>();
                 var routeWeight = 0.0;
                 bool invalidRoute = false;

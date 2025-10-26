@@ -8,7 +8,7 @@ namespace RCVRPTW
 {
     internal class TabuSearch
     {
-        public static Solution run(int MaxIterations, int TabuSize, Instance instance)
+        public static Solution run(int MaxIterations, int TabuSize, Instance instance, string mutationtype="swap")
         {
             Solution bestSolution = GreedyApproaches.generateGreedySolution(instance);
             bestSolution.calculateRoutesMetrics(instance.DistanceMatrix);
@@ -21,8 +21,8 @@ namespace RCVRPTW
             {
                 Solution bestNeighbor = null;
                 double bestNeighborObjective = double.MaxValue;
-                var neighborhood = NeighborhoodGeneratorLocation.GenerateAllSwaps(currentSolution.Routes, instance.Vehicles, instance.DistanceMatrix);
-                foreach (var neighbor in neighborhood)
+                var neighborhood = NeighborhoodGeneratorLocation.GenerateAllSwaps(currentSolution.Routes, instance.Vehicles, instance.DistanceMatrix, mutationtype);
+                foreach (var neighbor in neighborhood.Take(TabuSize*10))
                 {
                     bool isTabu = tabuList.Any(tabuSolution => tabuSolution.Equals(neighbor));
                     var objective = neighbor.TotalCost + neighbor.TotalPenalty + neighbor.TotalVehicleOperationTime;
@@ -35,7 +35,9 @@ namespace RCVRPTW
                     }
                 }
                 if (bestNeighbor == null)
+                {
                     break;
+                }
                 currentSolution = bestNeighbor;
                 if (bestNeighborObjective < bestObjective)
                 {
@@ -52,7 +54,6 @@ namespace RCVRPTW
                     tabuList.Dequeue();
                 if (notImprovingIterations >= 0.25 * MaxIterations)
                 {
-                    Console.Write("XD!");
                     notImprovingIterations = 0;
                     currentSolution = NeighborhoodGeneratorLocation.GenerateRandomSolution(currentSolution.Routes, instance.Vehicles, instance.DistanceMatrix);
                 }
