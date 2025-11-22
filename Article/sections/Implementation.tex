@@ -4,7 +4,7 @@ This section describes the software architecture and implementation details of t
 
 \subsection{Software Architecture}
 
-The implementation follows object-oriented design principles and consists of several core components organized into a modular architecture. Figure~\ref{fig:architecture} conceptually illustrates the main modules and their interactions.
+The implementation follows object-oriented design principles and consists of several core components organized into a modular architecture.
 
 \subsubsection{Core Data Structures}
 
@@ -79,7 +79,7 @@ Several design choices enhance computational efficiency:
     
     \item \textbf{Incremental Evaluation:} Route metrics (cost, penalties, feasibility) are computed incrementally during neighborhood exploration, avoiding redundant full-route re-evaluations.
     
-    \item \textbf{Lazy Neighborhood Generation:} The Tabu Search implementation generates neighbors on-demand using LINQ's lazy evaluation (\texttt{.Take(TabuSize*10)}), terminating generation once sufficient candidates are found.
+    \item \textbf{Lazy Neighborhood Generation:} The Tabu Search implementation generates neighbors on-demand using LINQ's lazy evaluation (\texttt{.Take(TabuSize*10)}), terminating generation once sufficient candidates are found. The multiplier of 10 provides a reasonable exploration breadth while maintaining computational efficiency.
     
     \item \textbf{Efficient Data Structures:} Tabu list is implemented as a fixed-size queue with O(1) insertion and O(n) membership testing. Routes are represented as lists enabling O(1) indexed access.
 \end{itemize}
@@ -105,7 +105,7 @@ The framework generates 500 stochastic scenarios for each of six Solomon benchma
 
 The implementation ensures reproducibility through:
 \begin{itemize}
-    \item Explicit random seed initialization (\texttt{baseSeed = 42})
+    \item Explicit random seed initialization (\texttt{baseSeed = 42}, a commonly-used fixed value in computational research for deterministic reproducibility)
     \item Deterministic algorithm execution (fixed iteration order)
     \item Complete parameter logging in output files
 \end{itemize}
