@@ -27,18 +27,18 @@ Taking into account the fleet’s limited capacity and service times that depend
 
 \begin{figure}[htbp]
 	\begin{center}
-    \includegraphics[width=0.7\linewidth]{img/subjectVisualisation.jpg} 
+    \includegraphics[width=0.7\linewidth]{img/vrp_optimization_illustration.jpg} 
 	\end{center}
 	\caption{Conceptual illustration of flexible delivery scheduling challenges and algorithmic optimization comparison (Tabu Search vs. Greedy). Source: AI-generated graphic.} \label{fig:conceptual_illustration}
 \end{figure}
 
 \subsection{Research hypotheses}
-To evaluate the effectiveness and robustness of the proposed approaches, we formulate the following research hypotheses:
+To evaluate the effectiveness and operational robustness of the proposed approaches, we formulate the following research hypotheses:
 
 \begin{itemize}
     \item[\textbf{H1.}] The metaheuristic (Tabu Search) provides a lower expected total cost than the greedy algorithm across stochastic scenarios. This hypothesis tests whether the intelligent search process offers better average performance when uncertainty is introduced into customer time windows and demands.
     
-    \item[\textbf{H2.}] The Tabu Search exhibits smaller variability of results across scenarios. This indicates higher robustness, as the solution quality remains more stable when faced with changes in input data.
+    \item[\textbf{H2.}] The Tabu Search exhibits smaller variability of results across scenarios. This indicates higher operational robustness, as the solution quality remains more stable when faced with changes in input data.
     
     \item[\textbf{H3.}] The Tabu Search minimizes the total penalty associated with time-window violations compared to the greedy approach. While zero penalty may not always be achievable due to infeasible configurations of windows, the goal is to reduce the overall magnitude of violations.
     
