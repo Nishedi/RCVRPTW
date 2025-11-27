@@ -1,6 +1,6 @@
 \section{Conclusion}
 
-This paper presented a comprehensive study of the Robust Capacitated Vehicle Routing Problem with Time Windows (RCVRPTW). Formulated mathematical model includes vehicle capacity constraints, time windows, service times, and operational cost components including travel distance, waiting time, and penalty costs for time window violations.
+This paper presented a comprehensive study of the Capacitated Vehicle Routing Problem with Time Windows (CVRPTW) under stochastic conditions. The formulated mathematical model includes vehicle capacity constraints, time windows, service times, and operational cost components including travel distance, waiting time, and penalty costs for time window violations. Although the proposed approach does not constitute a formal robust optimization method in the theoretical sense, it exhibits characteristics of \emph{operational robustness} --- demonstrating stable performance across diverse stochastic scenarios.
 
 \subsection{Key Findings}
 
@@ -9,7 +9,7 @@ Experimental analysis, conducted on 3,000 stochastic scenarios derived from the 
 \begin{itemize}
     \item \textbf{Superior Expected Performance (H1):} Tabu Search achieved a substantially lower average objective value (9096.43) compared to the greedy algorithm (10830.74), representing approximately 16\% improvement. This difference was confirmed as statistically significant using both Wilcoxon signed-rank and paired t-tests ($p = 0.0$).
     
-    \item \textbf{Enhanced Robustness (H2):} The metaheuristic exhibited lower variability across scenarios (standard deviation: 5838.98 vs. 6266.17) and tighter distributional characteristics, as evidenced by consistently smaller interquartile ranges and upper percentiles. ECDF analysis confirmed this robustness across all Solomon instance families (clustered, random, and mixed).
+    \item \textbf{Enhanced Operational Robustness (H2):} The metaheuristic exhibited lower variability across scenarios (standard deviation: 5838.98 vs. 6266.17) and tighter distributional characteristics, as evidenced by consistently smaller interquartile ranges and upper percentiles. ECDF analysis confirmed this operational robustness across all Solomon instance families (clustered, random, and mixed).
     
     \item \textbf{Cost Component Trade-offs (H3):} While Tabu Search incurred slightly higher time-window penalties (1598.55 vs. 1414.67), it achieved substantial reductions in travel costs (1826.93 vs. 2722.83) and vehicle operation time (5670.95 vs. 6693.24). This demonstrates that intelligent exploration of the solution space can strategically accept limited constraint relaxation to achieve globally superior solutions.
     
@@ -20,9 +20,9 @@ Experimental analysis, conducted on 3,000 stochastic scenarios derived from the 
 
 The main contributions of this work include:
 \begin{enumerate}
-    \item A complete MILP formulation of the RCVRPTW with soft time windows that balances multiple cost components and supports practical operational constraints.
+    \item A complete MILP formulation of the CVRPTW with soft time windows that balances multiple cost components and supports practical operational constraints.
     \item A comprehensive experimental framework for evaluating routing algorithms under stochastic demand and time window perturbations, addressing realistic uncertainty in logistics operations.
-    \item Empirical validation demonstrating that metaheuristic approaches (specifically Tabu Search) provide not only better average performance but also superior robustness and risk mitigation compared to constructive greedy methods.
+    \item Empirical validation demonstrating that metaheuristic approaches (specifically Tabu Search) provide not only better average performance but also superior operational robustness and risk mitigation compared to constructive greedy methods.
     \item Analysis of cost component trade-offs showing how intelligent search can strategically balance competing objectives (route length, service time, and time window compliance).
 \end{enumerate}
 
