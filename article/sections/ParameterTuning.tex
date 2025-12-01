@@ -212,7 +212,7 @@ The parameter tuning experiments lead to the following conclusions:
     
     \item \textbf{Iteration count}: The optimal number of iterations lies in the range of 100--200. Using only 50 iterations results in premature termination, while exceeding 200 iterations shows diminishing returns without significant quality improvement.
     
-    \item \textbf{Recommended configuration}: Based on the experimental results, the recommended configuration for subsequent experiments is: \texttt{swap} mutation, tabu size of 30, and 100 iterations, which provides a good balance between solution quality and computational efficiency.
+    \item \textbf{Recommended configuration}: Based on the experimental results, the recommended configuration for subsequent experiments is: \texttt{swap} mutation, tabu size of 30, and 100 iterations. Although the best performing configuration uses tabu size of 50, the performance difference is marginal (less than 0.5\%), and a smaller tabu size provides better computational efficiency while maintaining near-optimal solution quality.
 \end{enumerate}
 
-These findings guided the parameter selection for the main experimental evaluation described in the previous subsections.
+These findings guided the parameter selection for the main experimental evaluation described in the following subsections.
