@@ -354,7 +354,8 @@
 \usepackage{caption}
 \DeclareCaptionLabelSeparator{colon}{. }
 \usepackage{textgreek}
-
+\usepackage{tikz}
+\usepackage{pgfplots}
 \hyphenation{op-tical net-works semi-conduc-tor}
 %\hyphenpenalty=500
 \usepackage{balance}
@@ -443,15 +444,15 @@ version={4.0},
 
 \pdfinfo {
 	/Author (Konrad Pempera)
-	/Title (Time- and Skill-dependent Vehicle Routing Problem in application of facility maintenance)
-	/Keywords (IEEEtran; journal; LaTeX; paper; template)
+	/Title (Evaluating Robustness of Tabu Search in Stochastic Variants of the CVRPTW)
+	/Keywords (robust, stochastic, time windows, MILP)
 }
 
 \hypersetup
 {pdfauthor={Konrad Pempera},%
-pdftitle={Time- and Skill-dependent Vehicle Routing Problem in application of facility maintenance},%
+pdftitle={Evaluating Robustness of Tabu Search in Stochastic Variants of the CVRPTW},%
 pdfsubject={International Journal of Electronics and Telecommunications, 4 (2022), 300-306. DOI: 10.24425/ijet.2022.139xxx},%
-pdfkeywords={IEEEtran; journal; LaTeX; paper; template},%
+pdfkeywords={robust, stochastic, time windows, MILP},%
 pdfproducer={LaTeX},%
 pdfcreator={pdfLaTeX}
 }
@@ -463,7 +464,7 @@ pdfcreator={pdfLaTeX}
 % paper title
 % can use linebreaks \\ within to get better formatting as desired
 
-\title{\vspace{1cm} Time- and Skill-dependent Vehicle Routing Problem in application of facility maintenance} %title suggested by the Professor, however, it's up to us to change it according to our topics.
+\title{\vspace{1cm}Evaluating Robustness of Tabu Search in Stochastic Variants of the CVRPTW} 
 %
 %
 % author names and IEEE memberships
@@ -540,7 +541,7 @@ pdfcreator={pdfLaTeX}
 % ABSTRACT
  
 \begin{abstract}
-With current technological advancements, almost all new buildings require periodic maintenance inspections of their installed facilities. These inspections are performed by technicians with varying experience, and therefore varying work hours and rates. However, such inspections often cannot be performed while the building is in use, necessitating scheduling visits based on available time windows. In this paper, the described vehicle routing problem with time windows and varying employee rates is formulated using the MILP model. Three solution methods are proposed: a mathematical solver, an adapted Tabu Search algorithm, and the Artificial Bee Colony Algorithm. The aim of the study is to examine the impact of time window lengths and the junior-senior ratio of technician groups to the final solution. The results show that...
+Modern logistics systems operate under uncertain and dynamically changing conditions, particularly in relation to customer demand and delivery time windows. This paper investigates a robust variant of the Capacitated Vehicle Routing Problem with Time Windows (CVRPTW), in which both demand and time-window boundaries are subject to stochastic fluctuations. A complete Mixed Integer Linear Programming (MILP) formulation is proposed, integrating vehicle capacities, service times, soft time windows, and penalty-based feasibility relaxation. To solve large stochastic instances, a metaheuristic based on Tabu Search is developed and compared with a constructive greedy baseline. The experimental framework evaluates 3,000 scenarios generated from perturbed Solomon instances, enabling a comprehensive analysis of expected performance, robustness, and tail risk. Results demonstrate that Tabu Search significantly outperforms the greedy method, reducing average cost by approximately 16\%, lowering variability across scenarios, and mitigating extreme-cost outcomes. Although Tabu Search produces slightly higher time-window penalties, the reductions in travel distance and operational time lead to superior overall performance, confirming its suitability for robust route planning under uncertainty.
 \end{abstract}
 
 

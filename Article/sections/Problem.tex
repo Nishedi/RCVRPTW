@@ -175,8 +175,7 @@ This section presents a mathematical model of the Resource Constrained Capacitat
 
 We assume the existence of $N$ service locations in set $\mathcal{N} = \{1, 2, \dots, N\}$. This set is extended by location 0, representing the depot, creating a set $\mathcal{D} = \{0\} \cup \mathcal{N}$. The depot is the start and end point for each service vehicle. Each location has defined coordinates, based on which the travel cost between locations is calculated. The cost is represented by the distance matrix $d_{i,j}$ denoting the travel cost from location $i$ to $j$.
 
-A fleet of vehicles $\mathcal{V}$ is available, where each vehicle $v \in \mathcal{V}$ has a capacity constraint $Q_v$. Each customer location $i \in \mathcal{N}$ has a demand $q_i$, a service time $s_i$, and a time window $[a_i, b_i]$ during which service should ideally occur. The maximal capacity is set to 1000~kg, which represents an average load for small and medium delivery vans. The time constraint is set to 480 minutes, consistent with an 8-hour working day.
-
+A fleet of vehicles $\mathcal{V}$ is available, where each vehicle $v \in \mathcal{V}$ has a capacity constraint $Q_v$. Each customer location $i \in \mathcal{N}$ has a demand $q_i$, a service time $s_i$, and a time window $[a_i, b_i]$ during which service should ideally occur. The maximal capacity is set to 90 units , which represents an average load for small and medium delivery vans. 
 The notation used throughout this section is summarized in Table~\ref{tab:notation}.
 
 \begin{table}[ht]
@@ -242,7 +241,7 @@ where the first term represents the total travel distance, the second term accou
 
 \subsubsection{Constraints}
 
-The objective function \eqref{eq:objective} is minimized subject to the following constraints:
+The objective function \ref{eq:objective} is minimized subject to the following constraints:
 
 \textbf{Route structure constraints:}
 
@@ -262,7 +261,7 @@ The objective function \eqref{eq:objective} is minimized subject to the followin
     z_{v,i} = \sum_{j\in \mathcal{D}\setminus\{i\}}x_{v,j,i} = \sum_{j\in \mathcal{D}\setminus\{i\}}x_{v,i,j}, \quad \forall v \in \mathcal{V}, i \in \mathcal{N}
 \end{equation}
 
-Constraint \eqref{eq:one_visit} ensures that each customer location is visited exactly once by one vehicle. Constraint \eqref{eq:flow_balance} enforces flow conservation: if a vehicle arrives at a location, it must also depart from it. Constraint \eqref{eq:start_end_in_depot} requires that each vehicle starts and ends at the depot. Constraint \eqref{eq:edgevisitcorrelation} links the visit indicator variable with the routing variables.
+Constraint \ref{eq:one_visit} ensures that each customer location is visited exactly once by one vehicle. Constraint \ref{eq:flow_balance} enforces flow conservation: if a vehicle arrives at a location, it must also depart from it. Constraint \ref{eq:start_end_in_depot} requires that each vehicle starts and ends at the depot. Constraint \ref{eq:edgevisitcorrelation} links the visit indicator variable with the routing variables.
 
 \textbf{Time window constraints:}
 
