@@ -74,6 +74,35 @@ dotnet run -- C101 120
 # See Experiments.cs for RunRLExperiments method
 ```
 
+### RL Performance Analysis and Diagnostics
+
+⚠️ **Important Note**: The RL implementation is currently underperforming compared to Greedy and Tabu Search methods. 
+
+For detailed analysis of RL performance issues and recommendations, see:
+- **[RL_PERFORMANCE_ANALYSIS.md](RL_PERFORMANCE_ANALYSIS.md)** - Comprehensive analysis of current issues and improvement recommendations
+
+To diagnose RL performance issues, use the diagnostic utilities:
+
+```csharp
+// Run full diagnostics on an instance
+RLDiagnostics.RunFullDiagnostics("pliki/100 lokacji/C101.txt");
+
+// Quick comparison
+RLDiagnostics.QuickComparison("pliki/100 lokacji/C101.txt");
+
+// Test multiple instances
+RLDiagnostics.MultiInstanceTest();
+
+// Validate episode count before training
+RLDiagnostics.ValidateEpisodeCount(50000000); // Will warn if too high
+```
+
+**Common Issues:**
+- **Excessive training episodes**: Use 50-500, not millions
+- **Poor solution quality**: Often 3-8x worse than Greedy baseline
+- **High penalty weights**: Causing extremely negative rewards
+- **Limited state representation**: Q-table too small for problem complexity
+
 ## Research Article
 
 The `Article/` directory contains the LaTeX source for the research paper:
