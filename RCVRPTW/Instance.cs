@@ -22,7 +22,14 @@ namespace RCVRPTW
         public double[,] DistanceMatrix;
         public List<Vehicle> Vehicles = new List<Vehicle>();
         public string FileName;
-        public Instance(string filename, int vehicleNumbers=100, bool randomDemands = false, bool randomTimeWindow = false)
+        public double TooEarlyPenaltyFactor = 1.0;
+        public double TooLatePenaltyFactor = 1.0;
+        public double WaitingFactor = 1.0;
+        public double DistanceFactor = 1.0;
+        public double PenaltyFactor = 1.0;
+        public Instance(string filename, int vehicleNumbers=100, bool randomDemands = false, bool randomTimeWindow = false, 
+            double waitingFactor=1.0, double distanceFactor=1.0, double penaltyFactor=1.0,
+            double toEarlyPenaltyFactor=1.0, double toLatePenaltyFactor = 1.0)
         {
             FileName = filename;
             ParseSolomonFile(filename, randomDemands, randomTimeWindow);
@@ -30,7 +37,13 @@ namespace RCVRPTW
             {
                 Vehicles.Add(new Vehicle(0, 90.0));
             }
+            WaitingFactor = waitingFactor;
+            DistanceFactor = distanceFactor;
+            PenaltyFactor = penaltyFactor;
+            TooEarlyPenaltyFactor = toEarlyPenaltyFactor;
+            TooLatePenaltyFactor = toLatePenaltyFactor;
         }
+
 
         public void ParseSolomonFile(string filePath, bool randomDemands, bool randomTimeWindow)//typowy plik solomona
         {

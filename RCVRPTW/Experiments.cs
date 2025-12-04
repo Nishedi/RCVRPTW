@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,6 +19,7 @@ namespace RCVRPTW
         public List<int> GTR {  get; set; }
 
         public double GreedyObjective { get; set; }
+        public (double greedyTotalCost, double greedyTotalPenalty, double greedyVOT) GreedyMetrics { get; set; }
         public string MutationType { get; set; }
 
         public double Objective { get; set; } // total cost + penalty + vehicleOpTime
@@ -37,10 +39,18 @@ namespace RCVRPTW
             int[] iterationsGrid,
             int[] tabuSizeGrid,
             string[] mutationtypes,
+            string fileType,
             int repeats = 5,
             int baseSeed = 12345,
-            bool parallel = true)
+            bool parallel = true,
+            int maxTime = 120,
+            string defaultFilePath = "results_raw_"
+            )
         {
+            if (File.Exists($"{defaultFilePath}{fileType}.csv"))
+            {
+                File.Delete($"{defaultFilePath}{fileType}.csv");
+            }
             var results = new List<ExperimentResult>();
             var lockObj = new object();
 
@@ -65,7 +75,7 @@ namespace RCVRPTW
                                     var sw = Stopwatch.StartNew();
 
                                     var instance = scen.Instance;
-                                    var solution = TabuSearch.run(iterations, tabuSize, instance, mutationtype);
+                                    var solution = TabuSearch.run(iterations, tabuSize, instance, mutationtype, maxTime: maxTime);
                                     sw.Stop();
 
                                     var res = new ExperimentResult
@@ -84,13 +94,14 @@ namespace RCVRPTW
                                         TotalVehicleOperationTime = solution.TotalVehicleOperationTime,
                                         RoutesCount = solution.Routes.Count,
                                         DurationMs = sw.Elapsed.TotalMilliseconds,
+                                        GreedyMetrics = solution.GreedyMetrics,
                                         GTR = solution.Routes.SelectMany(r => r.Stops).Select(loc => loc.Id).ToList()
                                     };
 
                                     lock (lockObj)
                                     {
                                         results.Add(res);
-                                        AppendResultToCsv("results_raw.csv", res);
+                                        AppendResultToCsv($"{defaultFilePath}{fileType}.csv", res);
                                     }
                                 };
 
@@ -119,7 +130,7 @@ namespace RCVRPTW
                     t();
                     int now = System.Threading.Interlocked.Increment(ref completed);
 
-                    Console.Write($"\rDone {now}/{total}");
+                    Console.Write($"\rDone {now}/{total} ");
                 }
             }
 
@@ -128,12 +139,12 @@ namespace RCVRPTW
 
         private static void AppendResultToCsv(string path, ExperimentResult res)
         {
-            var header = "ScenarioId;Filename;Iterations;TabuSize;MutationType;Repeat;Seed;GreedyOjective;Objective;TotalCost;TotalPenalty;TotalVehicleOperationTime;RoutesCount;DurationMs;GTR";
+            var header = "ScenarioId;Filename;Iterations;TabuSize;MutationType;Repeat;Seed;GreedyOjective;GreedyTotalCost;GreedyTotalPenalty;GreedyTotalVehicleOperationTime;Objective;TotalCost;TotalPenalty;TotalVehicleOperationTime;RoutesCount;DurationMs;GTR";
             var exists = File.Exists(path);
             using (var sw = new StreamWriter(path, append: true))
             {
                 if (!exists) sw.WriteLine(header);
-                string result = $"{res.ScenarioId};{res.FileName};{res.Iterations};{res.TabuSize};{res.MutationType};{res.Repeat};{res.Seed};{res.GreedyObjective};{res.Objective};{res.TotalCost};{res.TotalPenalty};{res.TotalVehicleOperationTime};{res.RoutesCount};{res.DurationMs};{string.Join(",", res.GTR)}";
+                string result = $"{res.ScenarioId};{res.FileName};{res.Iterations};{res.TabuSize};{res.MutationType};{res.Repeat};{res.Seed};{res.GreedyObjective};{res.GreedyMetrics.greedyTotalCost};{res.GreedyMetrics.greedyTotalPenalty};{res.GreedyMetrics.greedyVOT};{res.Objective};{res.TotalCost};{res.TotalPenalty};{res.TotalVehicleOperationTime};{res.RoutesCount};{res.DurationMs};{string.Join(",", res.GTR)}";
                 //Console.WriteLine($"{res.FileName}:{res.DurationMs}");
                 sw.WriteLine(result);
             }

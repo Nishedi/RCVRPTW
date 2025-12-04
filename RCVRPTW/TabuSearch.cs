@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,20 +9,25 @@ namespace RCVRPTW
 {
     internal class TabuSearch
     {
-        public static Solution run(int MaxIterations, int TabuSize, Instance instance, string mutationtype="swap")
+        public static Solution run(int MaxIterations, int TabuSize, Instance instance, string mutationtype="swap", int maxTime = 120)
         {
             Solution bestSolution = GreedyApproaches.generateGreedySolution(instance);
-            bestSolution.calculateRoutesMetrics(instance.DistanceMatrix);
+            bestSolution.calculateRoutesMetrics(instance);
             (double greedyTotalCost, double greedyTotalPenalty, double greedyVOT) GreedyMetrics = (bestSolution.TotalCost, bestSolution.TotalPenalty, bestSolution.TotalVehicleOperationTime);
             var bestObjective = bestSolution.TotalCost + bestSolution.TotalPenalty + bestSolution.TotalVehicleOperationTime;
+            Console.WriteLine($"TabuSize:{TabuSize} MaxIterations:{MaxIterations} MutationType: {mutationtype}" +
+                $"Initial greedy solution objective: {Math.Round(bestObjective)}");
             Solution currentSolution = bestSolution;
             Queue<Solution> tabuList = new Queue<Solution>();
             int notImprovingIterations = 0;
-            for (int iter = 0; iter < MaxIterations; iter++)
+            int iter = 0;
+            var stopwatch = Stopwatch.StartNew();
+            maxTime *= 1000;
+            while (stopwatch.ElapsedMilliseconds <= maxTime)
             {
                 Solution bestNeighbor = null;
                 double bestNeighborObjective = double.MaxValue;
-                var neighborhood = NeighborhoodGeneratorLocation.GenerateAllSwaps(currentSolution.Routes, instance.Vehicles, instance.DistanceMatrix, mutationtype);
+                var neighborhood = NeighborhoodGeneratorLocation.GenerateAllSwaps(currentSolution.Routes, instance.Vehicles, instance, mutationtype);
                 foreach (var neighbor in neighborhood.Take(TabuSize*10))
                 {
                     bool isTabu = tabuList.Any(tabuSolution => tabuSolution.Equals(neighbor));
@@ -44,6 +50,7 @@ namespace RCVRPTW
                     bestSolution = bestNeighbor;
                     bestObjective = bestNeighborObjective;
                     notImprovingIterations = 0;
+                    Console.Write($"{iter}:{Math.Round(bestObjective)}. ");
                 }
                 else
                 {
@@ -52,12 +59,16 @@ namespace RCVRPTW
                 tabuList.Enqueue(currentSolution);
                 if (tabuList.Count > TabuSize)
                     tabuList.Dequeue();
-                if (notImprovingIterations >= 0.25 * MaxIterations)
+                if (notImprovingIterations >= MaxIterations)
                 {
+                    Console.Write(",");
                     notImprovingIterations = 0;
-                    currentSolution = NeighborhoodGeneratorLocation.GenerateRandomSolution(currentSolution.Routes, instance.Vehicles, instance.DistanceMatrix);
+                    currentSolution = NeighborhoodGeneratorLocation.GenerateRandomSolution(currentSolution.Routes, instance.Vehicles, instance);
                 }
+                iter++;
             }
+            Console.WriteLine($"\nTabu Search completed {iter} iterations in {stopwatch.Elapsed.TotalSeconds} seconds.");
+            Console.WriteLine("---------------------------------------------------------------------------------------------------------------------------------\n\n");
             bestSolution.GreedyMetrics = GreedyMetrics;
             return bestSolution;
         }

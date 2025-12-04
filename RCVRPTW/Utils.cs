@@ -8,7 +8,7 @@ namespace RCVRPTW
 {
     internal class Utils
     {
-        public static (double cost, double penalty, double vehicleOperationTime) calculateMetrics(double startTime, List<Location> stops, double[,] distanceMatrix)
+        public static (double cost, double penalty, double vehicleOperationTime) calculateMetrics(double startTime, List<Location> stops, Instance instance)
         {
             double vehicleOperationTime = startTime;
             double penalty = 0.0;
@@ -17,12 +17,12 @@ namespace RCVRPTW
             {
                 Location actualCity = stops[r];
                 Location prevCity = stops[r - 1];
-                cost += distanceMatrix[prevCity.Id, actualCity.Id];
-                vehicleOperationTime += distanceMatrix[prevCity.Id, actualCity.Id];
+                cost += instance.DistanceMatrix[prevCity.Id, actualCity.Id];
+                vehicleOperationTime += instance.DistanceMatrix[prevCity.Id, actualCity.Id];
                 if (vehicleOperationTime < actualCity.TimeWindow.Start)
                 {
                     double costOfWaiting = actualCity.TimeWindow.Start - vehicleOperationTime;
-                    double toEarlyPenalty = Math.Min(costOfWaiting, actualCity.ServiceTime) * 1; //tutaj mozna dodac jakis wspolczynnik jakby byly różne kary za zbyt wczesne dotarcie
+                    double toEarlyPenalty = Math.Min(costOfWaiting, actualCity.ServiceTime) * instance.TooEarlyPenaltyFactor; //tutaj mozna dodac jakis wspolczynnik jakby byly różne kary za zbyt wczesne dotarcie
                     if (costOfWaiting <= toEarlyPenalty)//to na sytuacje gdyby kara byla wieksza niz 1 * to co się wykonywało przed czasem
                     {
                         vehicleOperationTime += costOfWaiting;
@@ -35,12 +35,12 @@ namespace RCVRPTW
                 vehicleOperationTime += actualCity.ServiceTime;
                 if (vehicleOperationTime > actualCity.TimeWindow.End)
                 {
-                    double toLatePenalty = Math.Min(actualCity.ServiceTime, vehicleOperationTime - actualCity.TimeWindow.End);
+                    double toLatePenalty = Math.Min(actualCity.ServiceTime, vehicleOperationTime - actualCity.TimeWindow.End)*instance.TooLatePenaltyFactor;
                     penalty += toLatePenalty;
                 }
             }
             vehicleOperationTime -= startTime;
-            return (cost, penalty, vehicleOperationTime);
+            return (instance.DistanceFactor*cost, instance.PenaltyFactor*penalty, instance.WaitingFactor*vehicleOperationTime);
         }
 
     }

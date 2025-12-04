@@ -40,6 +40,7 @@ public class Solution
     public List<Route> Routes { get; set; }
     public double TotalCost { get; set; }
     public double TotalPenalty { get; set; }
+    public (double i, double j) move { get; set; }
 
     public double TotalVehicleOperationTime { get; set; }
     public double TotalMixedMetrics = 0.0;
@@ -71,15 +72,16 @@ public class Solution
     {
         if (obj == null || GetType() != obj.GetType()) return false;
         Solution other = (Solution)obj;
-        if (other.Routes.Count != this.Routes.Count) return false;
-        for(int r = 0; r < this.Routes.Count; r++)
-        {
-            if (other.Routes[r].Stops.Count != this.Routes[r].Stops.Count) return false;
-            for(int s = 0; s < this.Routes[r].Stops.Count; s++)
-            {
-                if (other.Routes[r].Stops[s].Id != this.Routes[r].Stops[s].Id) return false;
-            }
-        }
+        if (other.move.i!= this.move.i || other.move.j != this.move.j) return false;
+        //if (other.Routes.Count != this.Routes.Count) return false;
+        //for(int r = 0; r < this.Routes.Count; r++)
+        //{
+        //    if (other.Routes[r].Stops.Count != this.Routes[r].Stops.Count) return false;
+        //    for(int s = 0; s < this.Routes[r].Stops.Count; s++)
+        //    {
+        //        if (other.Routes[r].Stops[s].Id != this.Routes[r].Stops[s].Id) return false;
+        //    }
+        //}
         return true;
     }
 
@@ -93,11 +95,11 @@ public class Solution
         return stringValue+"\n";
     }
 
-    public void calculateRoutesMetrics(double[,] distanceMatrix)
+    public void calculateRoutesMetrics(Instance instance)
     {
         foreach(var route in Routes)
         {
-            var (cost, penalty, vehicleOperationTime) = Utils.calculateMetrics(route.StartTime, route.Stops, distanceMatrix);
+            var (cost, penalty, vehicleOperationTime) = Utils.calculateMetrics(route.StartTime, route.Stops, instance);
             TotalCost += cost;
             TotalPenalty += penalty;
             TotalVehicleOperationTime += vehicleOperationTime;

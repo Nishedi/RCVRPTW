@@ -30,7 +30,7 @@ public static class NeighborhoodGeneratorLocation
             list[i] = value;
         }
     }
-    public static Solution GenerateRandomSolutionL(List<Route> routes, List<Vehicle> vehicles, double[,] distanceMatrix)
+    public static Solution GenerateRandomSolutionL(List<Route> routes, List<Vehicle> vehicles, Instance instance)
     {
         bool invalidRoute = false;
         int x = 0;
@@ -54,7 +54,7 @@ public static class NeighborhoodGeneratorLocation
                         var route = new Route(90, nLocations, 0, routeWeight);
                         route.Stops.Add(allLocations[0]);
                         route.Stops.Insert(0, allLocations[0]);
-                        (route.Cost, route.Penalty, route.vehicleOperationTime, route.StartTime) = bestStartTime(nLocations, distanceMatrix);
+                        (route.Cost, route.Penalty, route.vehicleOperationTime, route.StartTime) = bestStartTime(nLocations, instance);
                         nRoutes.Add(route);
                         nLocations = new List<Location>();
                         routeWeight = 0;
@@ -91,7 +91,7 @@ public static class NeighborhoodGeneratorLocation
 
     }
 
-    public static Solution GenerateRandomSolution(List<Route> routes, List<Vehicle> vehicles, double[,] distanceMatrix)
+    public static Solution GenerateRandomSolution(List<Route> routes, List<Vehicle> vehicles, Instance instance)
     {
         bool invalidRoute = false;
         int x = 0;
@@ -123,7 +123,7 @@ public static class NeighborhoodGeneratorLocation
                         var route = new Route(90, nLocations, 0, routeWeight);
                         route.Stops.Add(first);
                         route.Stops.Insert(0, first);
-                        (route.Cost, route.Penalty, route.vehicleOperationTime, route.StartTime) = bestStartTime(nLocations, distanceMatrix);
+                        (route.Cost, route.Penalty, route.vehicleOperationTime, route.StartTime) = bestStartTime(nLocations, instance);
                         nRoutes.Add(route);
                         nLocations = new List<Location>();
                         routeWeight = 0;
@@ -134,7 +134,7 @@ public static class NeighborhoodGeneratorLocation
                     var route = new Route(90, nLocations, 0, routeWeight);
                     route.Stops.Add(first   );
                     route.Stops.Insert(0, first);
-                    (route.Cost, route.Penalty, route.vehicleOperationTime, route.StartTime) = bestStartTime(nLocations, distanceMatrix);
+                    (route.Cost, route.Penalty, route.vehicleOperationTime, route.StartTime) = bestStartTime(nLocations, instance);
                     nRoutes.Add(route);
                     nLocations = new List<Location>();
                     nLocations.Add(location);
@@ -205,7 +205,7 @@ public static class NeighborhoodGeneratorLocation
         return neighbor;
     }
 
-    public static List<Solution> GenerateAllSwaps(List<Route> routes, List<Vehicle> vehicles, double[,] distanceMatrix, string mutationType)
+    public static List<Solution> GenerateAllSwaps(List<Route> routes, List<Vehicle> vehicles, Instance instance,  string mutationType)
     {
         var neighborsBag = new ConcurrentBag<Solution>();
 
@@ -257,7 +257,7 @@ public static class NeighborhoodGeneratorLocation
                             route.Stops.Add(depot);
 
                             // oblicz metryki trasy (zakladamy, ze bestStartTime jest bezpieczne)
-                            (route.Cost, route.Penalty, route.vehicleOperationTime, route.StartTime) = bestStartTime(nLocations, distanceMatrix);
+                            (route.Cost, route.Penalty, route.vehicleOperationTime, route.StartTime) = bestStartTime(nLocations, instance);
 
                             nRoutes.Add(route);
 
@@ -299,7 +299,7 @@ public static class NeighborhoodGeneratorLocation
                         solution.TotalVehicleOperationTime += route.vehicleOperationTime;
                     }
                     solution.TotalMixedMetrics = solution.sumMetrics();
-
+                    solution.move = (i, j);
                     neighborsBag.Add(solution);
                 }
             }
@@ -309,7 +309,7 @@ public static class NeighborhoodGeneratorLocation
         var neighbors = neighborsBag.OrderBy(sol => sol.TotalCost).ToList();
         return neighbors;
     }
-    public static List<Solution> GenerateAllSwaps_not_parrarel(List<Route> routes, List<Vehicle> vehicles, double[,] distanceMatrix, string mutationType)//pomyslec czy nie liczyc juz przy generowaniu mutacji zamiast poxniej
+    public static List<Solution> GenerateAllSwaps_not_parrarel(List<Route> routes, List<Vehicle> vehicles, Instance instance, string mutationType)//pomyslec czy nie liczyc juz przy generowaniu mutacji zamiast poxniej
     {
         List<Solution> neighbors = new List<Solution>();
         var routeNeighbors = new List<List<Route>>();
@@ -345,7 +345,7 @@ public static class NeighborhoodGeneratorLocation
                             var route = new Route(90, nLocations,0,routeWeight);
                             route.Stops.Add(allLocations[0]);
                             route.Stops.Insert(0, allLocations[0]);
-                            (route.Cost, route.Penalty, route.vehicleOperationTime, route.StartTime) = bestStartTime(nLocations, distanceMatrix);
+                            (route.Cost, route.Penalty, route.vehicleOperationTime, route.StartTime) = bestStartTime(nLocations, instance);
                             nRoutes.Add(route);
                             nLocations = new List<Location>();
                             routeWeight = 0;
@@ -380,12 +380,13 @@ public static class NeighborhoodGeneratorLocation
                 solution.TotalVehicleOperationTime += route.vehicleOperationTime;
                 solution.TotalMixedMetrics = solution.sumMetrics();
             }
+           
             neighbors.Add(solution);
         }
         return neighbors.OrderBy(sol => sol.TotalCost).ToList();
     }
 
-    public static (double bestCost, double bestPenalty, double bestVehicleOperationTime, double bestStartTime) bestStartTime(List<Location> stops, double[,] distanceMatrix)
+    public static (double bestCost, double bestPenalty, double bestVehicleOperationTime, double bestStartTime) bestStartTime(List<Location> stops, Instance instance)
     {
         int multiplier = Math.Max(8, stops.Count);
         double[] bestStartTimes = new double[multiplier];
@@ -404,7 +405,7 @@ public static class NeighborhoodGeneratorLocation
         var (bestCost, bestPenalty, bestVehicleOperationTime) = (0.0, 0.0, 0.0);
         foreach (var startTime in bestStartTimes)
         {
-            var (cost, penalty, vehicleOperationTime) = Utils.calculateMetrics(startTime, stops, distanceMatrix);
+            var (cost, penalty, vehicleOperationTime) = Utils.calculateMetrics(startTime, stops, instance);
             if (cost + penalty + vehicleOperationTime<bestTotalCost)
             {
                 bestTotalCost = cost + penalty + vehicleOperationTime;
