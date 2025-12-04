@@ -21,9 +21,12 @@
 
 
 \section{Introduction}\label{sec:introduction}
-\IEEEPARstart{I}{n} an era of rapidly changing supply chains, demand is growing for flexible transportation services that serve store networks, pickup points, construction sites, and temporary events. Transport companies perform daily deliveries of materials and components whose sizes may vary from day to day. Customers typically specify acceptable delivery and unloading time windows (e.g., for safety or operational reasons), so each visit must not only occur at a scheduled time but also complete unloading within a designated time window. Moreover, time windows need not be static — they can be modified in real time due to delays, demand fluctuations, or customer requests. Such variability requires robust planning against disruptions, including fast re-optimizations, rolling-horizon approaches, and models that incorporate stochastic and reactive elements to minimize costs and the risk of missing delivery windows.
+\IEEEPARstart{I}{n} an era of rapidly changing supply chains, demand is growing for flexible transportation services that serve store networks, pickup points, construction sites, and temporary events. Transport companies perform daily deliveries of materials and components whose sizes may vary from day to day. Customers typically specify acceptable delivery and unloading time windows (e.g., for safety or operational reasons), so each visit must not only occur at a scheduled time but also complete unloading within a designated time window.
 
-Taking into account the fleet’s limited capacity and service times that depend on delivery size and unloading conditions, route planning and load allocation become a combinatorial problem burdened with many realistic operational constraints: vehicle capacities (capacitated), time windows of availability, and variable demand at delivery points. In this paper, we propose a mathematical model that reflects the described conditions and compare solution methods, including a greedy approach and a tailored metaheuristic adapted to large, real-world instances. We conduct experiments on benchmark data extended with stochastic modifications of customer time windows and demands.
+Time windows need not be static — they can be modified due to delays, demand fluctuations, or customer requests. In such conditions, planning methods capable of maintaining solution quality under changing input data are particularly important. Although the approach presented in this work does not constitute a formal robust optimization method in the theoretical sense, it demonstrates characteristics of \emph{operational robustness}. The use of multiple stochastic scenario analyzes additionally allows for the assessment of how algorithm behavior changes depending on perturbations, thereby enabling a more comprehensive evaluation of its stability. The algorithm's ability to intelligently explore the solution space means it adapts better to disruptions than constructive approaches, which enables reduction of operational costs and decreased risk of time window violations under uncertainty.
+
+Taking into account the fleet's limited capacity and service times, route planning and load allocation become a combinatorial problem burdened with many realistic operational constraints: vehicle capacities (capacitated), time windows of availability, and variable demand at delivery points. In this paper, a mathematical model reflecting the described conditions is proposed, and two solution methods are compared: a greedy approach and a tailored metaheuristic adapted to large instances. An additional value of this work is the ability to observe to what extent these methods differ in terms of robustness to uncertainty and how they behave under extreme conditions. The experiments were conducted on benchmark data extended with stochastic modifications of customer time windows and demands.
+
 
 \begin{figure}[htbp]
 	\begin{center}
@@ -33,20 +36,19 @@ Taking into account the fleet’s limited capacity and service times that depend
 \end{figure}
 
 \subsection{Research hypotheses}
-To evaluate the effectiveness and operational robustness of the proposed approaches, we formulate the following research hypotheses:
+To evaluate the effectiveness and stability under uncertainty robustness of the proposed approaches, the following research hypotheses were formulated:
 
 \begin{itemize}
-    \item[\textbf{H1.}] The metaheuristic (Tabu Search) provides a lower expected total cost than the greedy algorithm across stochastic scenarios. This hypothesis tests whether the intelligent search process offers better average performance when uncertainty is introduced into customer time windows and demands.
+    \item[\textbf{H1.}] The metaheuristic (Tabu Search) provides a lower expected total cost than the greedy algorithm across a broad set of stochastic scenarios.
+     \item[\textbf{H2.}] The Tabu Search exhibits smaller variability of results across scenarios, which indicates higher stability and operational robustness with respect to changing input data.
     
-    \item[\textbf{H2.}] The Tabu Search exhibits smaller variability of results across scenarios. This indicates higher operational robustness, as the solution quality remains more stable when faced with changes in input data.
+    \item[\textbf{H3.}] The Tabu Search minimizes the total penalty associated with time-window violations compared to the greedy approach. While in most configurations avoiding penalties may be impossible, the goal is to reduce their magnitude.
     
-    \item[\textbf{H3.}] The Tabu Search minimizes the total penalty associated with time-window violations compared to the greedy approach. While zero penalty may not always be achievable due to infeasible configurations of windows, the goal is to reduce the overall magnitude of violations.
-    
-    \item[\textbf{H4.}] The Tabu Search reduces the loss tail — that is, the occurrence and severity of extreme-cost scenarios. By lowering the frequency and impact of high-cost outliers, the algorithm provides more reliable performance in worst-case conditions.
+    \item[\textbf{H4.}] The Tabu Search reduces the loss tail — that is, the frequency and severity of extreme-cost scenarios. Fewer extreme cases indicate greater reliability of the method under difficult operating conditions.
     
 \end{itemize}
 
-The above hypotheses focus not only on average performance but also on the stability and reliability of solutions in uncertain conditions. This allows the analysis to move beyond nominal optimization and assess the algorithms’ behavior in the presence of stochastic disturbances — a crucial factor in real-world logistics operations.
+The above hypotheses address not only average solution quality but also their stability and reliability under uncertainty. This allows the analysis to move beyond nominal optimization results and assess algorithm behavior in the presence of stochastic disturbances — a crucial factor in practical logistics applications.
 
 % \textbf{Tutaj trzeba jeszcze trochę dopisać o motywacji }
 
