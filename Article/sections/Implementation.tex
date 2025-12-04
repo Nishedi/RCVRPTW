@@ -26,7 +26,7 @@ The implementation defines several key classes that encapsulate problem entities
 
 \subsubsection{Algorithm Implementation}
 
-The solution methods are implemented as separate modules:
+The solution methods are implemented as separate modules representing three distinct algorithmic paradigms:
 
 \begin{itemize}
     \item \textbf{GreedyApproaches:} Implements the constructive greedy heuristic. The algorithm maintains a single global tour representation (GTR) and iteratively inserts the nearest feasible customer based on distance, time windows, and capacity constraints. When a vehicle reaches capacity or time limits, a new vehicle is dispatched from the depot. The method \texttt{generateGreedySolution(Instance)} returns a complete Solution object.
@@ -47,6 +47,19 @@ The solution methods are implemented as separate modules:
         \item \textit{invert:} Reverses a subsequence of customers within a route
     \end{itemize}
     Each generated neighbor is evaluated immediately, computing cost, penalty, and feasibility metrics.
+    
+    \item \textbf{QLearningAgent:} Implements a Reinforcement Learning approach based on Q-learning \cite{Watkins1992}. The agent learns to construct routes by sequentially selecting customer locations, learning from experience which decisions lead to better overall solutions. Key components include:
+    \begin{itemize}
+        \item \textit{State Representation:} States encode the current location, load level (discretized to 10 levels), time level (discretized to 10 levels), and number of unvisited customers. This simplified representation balances expressiveness with computational tractability.
+        \item \textit{Action Space:} Actions correspond to selecting the next customer location to visit. Feasible actions are dynamically filtered based on vehicle capacity and time window constraints.
+        \item \textit{Reward Function:} Immediate rewards are computed as negative costs, incorporating travel distance, waiting time, time window violation penalties (weighted by factor 1000), and capacity violation penalties (weighted by factor 10000).
+        \item \textit{Q-Table:} Stores learned Q-values for state-action pairs in a dictionary structure, enabling efficient lookup and update.
+        \item \textit{Learning Parameters:} Learning rate $\alpha = 0.15$, discount factor $\gamma = 0.9$, initial exploration rate $\epsilon = 1.0$ with decay factor 0.99 down to minimum 0.05.
+        \item \textit{Training Phase:} The agent undergoes episodic training where each episode involves constructing a complete solution. Q-values are updated using the standard Q-learning update rule: $Q(s,a) \leftarrow Q(s,a) + \alpha[r + \gamma \max_{a'} Q(s',a') - Q(s,a)]$.
+        \item \textit{Inference Phase:} After training, the agent uses pure exploitation ($\epsilon = 0$) to generate solutions based on learned Q-values.
+    \end{itemize}
+    
+    \item \textbf{RLSolver:} Provides a unified interface for training and solving instances using the Q-learning agent. The method \texttt{Run(Instance, trainingEpisodes, learningRate, ...)} orchestrates the training and inference phases, returning the best solution found.
 \end{itemize}
 
 \subsubsection{Scenario Generation and Experimental Framework}
