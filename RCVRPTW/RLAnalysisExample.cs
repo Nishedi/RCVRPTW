@@ -74,7 +74,7 @@ namespace RCVRPTW
             
             try
             {
-                RLDiagnostics.RunFullDiagnostics(instancePath, episodeCounts: new int[] { 10, 25, 50, 100 });
+                RLDiagnostics.RunFullDiagnostics(instancePath);
             }
             catch (Exception ex)
             {

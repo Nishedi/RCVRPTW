@@ -94,7 +94,7 @@ namespace RCVRPTW
             Console.WriteLine("3. SUMMARY AND RECOMMENDATIONS");
             Console.WriteLine("───────────────────────────────────────────────────────────");
 
-            var bestRL = results.MinBy(r => r.objective);
+            var bestRL = results.OrderBy(r => r.objective).First();
             double improvement = ((greedyObj - bestRL.objective) / greedyObj) * 100;
 
             Console.WriteLine($"\nBest RL Configuration:");
