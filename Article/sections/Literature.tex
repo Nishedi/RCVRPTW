@@ -14,12 +14,23 @@ Despite the rich literature, significant research gaps remain. Many works treat 
 
 The systematic review by Liu et al. \cite{Liu2023} indicates that approximately 86\% of studies on VRPTW employ approximate methods, mainly heuristics and metaheuristics, with the majority being tested only on deterministic data. This means that despite the widespread use of advanced search methods, research on VRPTW under uncertainty still represents a smaller portion of the literature.
 
+\subsection{Reinforcement Learning for Vehicle Routing Problems}
+
+In recent years, Reinforcement Learning (RL) has emerged as a promising paradigm for solving combinatorial optimization problems, including vehicle routing. Unlike traditional optimization methods that rely on problem-specific heuristics, RL agents learn solution strategies through interaction with the environment, potentially discovering novel approaches that generalize across problem instances \cite{Sutton2018}.
+
+The foundational work of Q-learning \cite{Watkins1992} and its deep learning extensions \cite{Mnih2015} demonstrated that agents can learn complex decision-making policies through trial and error. Applied to VRP, several pioneering studies have shown the potential of RL-based approaches. Bello et al. \cite{Bello2017} introduced neural combinatorial optimization using policy gradient methods, demonstrating competitive performance on small TSP instances. Nazari et al. \cite{Nazari2018} extended this approach to VRP with dynamic customer demands using attention-based pointer networks. Kool et al. \cite{Kool2019} further advanced the field with their attention mechanism that learns to solve routing problems more efficiently, achieving near-optimal solutions on various problem sizes.
+
+Recent developments have focused on incorporating time windows and stochastic elements. Joe and Lau \cite{Joe2020} proposed a deep RL approach for dynamic VRP with stochastic customer arrivals, demonstrating the ability to adapt to real-time changes. Ma et al. \cite{Ma2021} developed joint attention mechanisms specifically for VRPTW, learning to balance travel costs with time window compliance. Delarue et al. \cite{Delarue2020} explored RL with combinatorial actions, showing improved scalability for large-scale routing problems. The comprehensive survey by Gao et al. \cite{Gao2023} provides an extensive overview of deep RL methods for dynamic VRP, highlighting both achievements and open challenges.
+
+While deep RL methods show promise, they typically require substantial training data and computational resources. Classical Q-learning approaches, despite being less sophisticated, offer advantages in terms of interpretability, lower computational requirements, and faster adaptation to new problem instances. For problems with stochastic perturbations like those considered in this work, tabular Q-learning can effectively learn policies that balance exploration and exploitation while maintaining reasonable computational costs.
+
 In summary, despite the notable progress achieved in the literature, a clear research gap can still be identified in the following areas:
 \begin{itemize}
     \item Modeling random time window boundaries as variables drawn from probability distributions.
     \item Integrating the stochastic nature of time windows with random demand.
     \item Applying scenario-based optimization approaches and analyzing results in terms of robustness, stability, and risk (e.g., the occurrence of extreme cost scenarios).
+    \item Comparative evaluation of traditional metaheuristics (e.g., Tabu Search) with reinforcement learning approaches on stochastic VRPTW instances.
     \item Conducting experiments on large benchmark instances that combine the above elements for future research.
 \end{itemize}
 
-This work presents a method aligned with the research direction on operational robustness and stochastic analysis. The approach does not constitute formal robust optimization but allows evaluation of algorithm behavior across a broad set of diverse scenarios, providing valuable insights on solution stability and quality. This work thus provides a foundation for further research, both comparative studies and the development of new methods for handling uncertainty in routing problems.
+This work addresses these gaps by presenting a comprehensive comparison of three distinct algorithmic paradigms: constructive heuristics (greedy), metaheuristics (Tabu Search), and reinforcement learning (Q-learning). The approach does not constitute formal robust optimization but allows evaluation of algorithm behavior across a broad set of diverse scenarios, providing valuable insights on solution stability and quality across different methodological approaches. This work thus provides a foundation for further research, both comparative studies and the development of new methods for handling uncertainty in routing problems.

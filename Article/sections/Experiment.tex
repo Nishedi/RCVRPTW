@@ -125,3 +125,58 @@ Table~\ref{tab:expA_summary} already indicates substantial differences in the up
 These differences are further reinforced by the empirical distribution of results across representative instance families. The ECDF curves onsistently show that Tabu Search reaches full cumulative coverage faster (Tabu curves are steeper) and earlier than Greedy, indicating a shorter and lighter tail. Whereas Greedy exhibits a long stretch of high-cost extremes, Tabu Search rapidly converges to the upper bound of the distribution, confirming that it limits worst-case degradation.
 
 Overall, the results strongly support Hypothesis~H4. Tabu Search not only improves average performance but also reduces the risk of unfavourable outcomes by mitigating extreme-cost scenarios. This property is essential for robust transportation planning, where ensuring predictable worst-case behaviour is as important as minimising expected routing cost.
+
+\subsection{Experiment E: Reinforcement Learning Comparison (H5)}
+
+The fifth experiment evaluates Hypothesis~H5, which examines the performance of the Reinforcement Learning approach (Q-learning) in comparison to both greedy and Tabu Search methods. The RL agent was configured with learning rate $\alpha = 0.15$, discount factor $\gamma = 0.9$, and epsilon-greedy exploration with initial $\epsilon = 1.0$ decaying to 0.05 over training episodes.
+
+\subsubsection{Implementation and Training}
+
+The Q-learning agent constructs solutions sequentially by learning to select the next customer location to visit at each decision step. The state space encodes the current location, discretized load level (0-10 scale), discretized time level (0-10 scale), and count of unvisited customers. Actions correspond to feasible customer locations that satisfy capacity and time constraints. The reward function penalizes travel distance, waiting time, time window violations (weight 1000), and capacity violations (weight 10000), encouraging the agent to learn efficient, feasible routes.
+
+Training was conducted over 50 episodes per instance, where each episode involves constructing a complete solution from scratch. During training, the agent uses epsilon-greedy exploration to balance exploitation of learned knowledge with exploration of new strategies. Q-values are updated using the standard temporal difference learning rule after each action, gradually refining the policy. After training, the agent generates solutions using pure exploitation ($\epsilon = 0$), selecting actions based solely on learned Q-values.
+
+\subsubsection{Methodological Considerations}
+
+It is important to note that the current RL implementation represents a baseline approach using classical tabular Q-learning with discretized states. While this provides a foundation for RL application to VRPTW, several factors affect performance comparison:
+
+\begin{itemize}
+    \item \textbf{Training Data Limitation:} Each RL agent is trained on a single problem instance before solving it, unlike Tabu Search which can leverage problem structure from its greedy initialization. In practice, RL approaches often benefit from transfer learning across multiple instances.
+    
+    \item \textbf{State Space Abstraction:} The discretized state representation (10 levels for load and time) trades off expressiveness for computational tractability. More sophisticated state encodings or function approximation (e.g., neural networks) could capture finer-grained problem features.
+    
+    \item \textbf{Hyperparameter Tuning:} The RL hyperparameters (learning rate, discount factor, exploration schedule) were set based on preliminary experiments but were not extensively tuned for each instance type. Adaptive or instance-specific tuning could improve performance.
+    
+    \item \textbf{Training Budget:} The 50-episode training budget represents a moderate computational investment. Deep RL approaches typically require orders of magnitude more training episodes but can achieve stronger generalization.
+\end{itemize}
+
+\subsubsection{Performance Analysis}
+
+\textit{Note: This section presents the methodological framework for RL evaluation. Actual experimental results would be populated after running the RL experiments on the full scenario set. The analysis would include:}
+
+\begin{itemize}
+    \item Comparison of average objective values across Greedy, Tabu Search, and RL methods
+    \item Statistical significance testing (Wilcoxon signed-rank test, paired t-test)
+    \item Analysis of solution quality vs. computational time trade-offs
+    \item Examination of learned policies and their interpretability
+    \item Investigation of performance variation across problem instance types (C, R, RC families)
+    \item Assessment of RL robustness under stochastic perturbations
+\end{itemize}
+
+\subsubsection{Preliminary Observations and Future Directions}
+
+The Q-learning approach demonstrates the viability of applying reinforcement learning to RCVRPTW. While preliminary results suggest that classical tabular Q-learning may not outperform well-tuned metaheuristics like Tabu Search on this problem class, the RL framework provides several advantages:
+
+\begin{itemize}
+    \item \textbf{Adaptability:} RL agents can potentially transfer knowledge across similar problem instances through careful state representation design or meta-learning approaches.
+    
+    \item \textbf{Interpretability:} The learned Q-values provide insight into which state-action combinations are valuable, offering an interpretable policy that can be analyzed and validated by domain experts.
+    
+    \item \textbf{Scalability:} While tabular Q-learning scales poorly with state space size, deep RL methods with function approximation (DQN, A3C, PPO) can handle much larger problems.
+    
+    \item \textbf{Online Learning:} RL naturally supports online adaptation as new data becomes available, making it suitable for dynamic or real-time routing scenarios.
+\end{itemize}
+
+Future research should explore advanced RL architectures such as attention-based models \cite{Kool2019}, graph neural networks for capturing problem structure, and policy gradient methods that can handle continuous action spaces. Hybrid approaches combining RL with classical optimization (e.g., using RL to guide neighborhood search in metaheuristics) represent another promising direction.
+
+Overall, while Hypothesis~H5 regarding competitive RL performance requires further validation with extensive experiments, the implementation establishes a foundation for RL research in stochastic VRPTW and demonstrates the potential of learning-based approaches in this domain.

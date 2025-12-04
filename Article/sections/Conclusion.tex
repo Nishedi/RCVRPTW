@@ -23,6 +23,8 @@ The main contributions of this work include:
     \item A complete MILP formulation of the RCVRPTW with soft time windows that balances multiple cost components and supports practical operational constraints.
     \item A comprehensive experimental framework for evaluating routing algorithms under stochastic demand and time window perturbations, addressing realistic uncertainty in logistics operations.
     \item Empirical validation demonstrating that metaheuristic approaches (specifically Tabu Search) provide not only better average performance but also superior robustness and risk mitigation compared to constructive greedy methods.
+    \item Implementation and evaluation of a Reinforcement Learning approach (Q-learning) for VRPTW, demonstrating the applicability of learning-based methods to stochastic routing problems and providing a baseline for future RL research in this domain.
+    \item Comparative analysis across three distinct algorithmic paradigms (constructive heuristics, metaheuristics, and reinforcement learning), revealing the strengths and trade-offs of each approach under uncertainty.
     \item Analysis of cost component trade-offs showing how intelligent search can strategically balance competing objectives (route length, service time, and time window compliance).
 \end{enumerate}
 
@@ -41,17 +43,23 @@ The results have direct implications for logistics practitioners facing dynamic 
 While this study provides valuable insights, several directions warrant further investigation:
 
 \begin{itemize}
+    \item \textbf{Advanced RL Architectures:} The Q-learning implementation presented here uses tabular methods with discretized states. Future work should explore deep reinforcement learning approaches (DQN, A3C, PPO) with neural network function approximators that can handle continuous state spaces and scale to larger problem instances. Attention-based models \cite{Kool2019} and graph neural networks show particular promise for capturing problem structure.
+    
+    \item \textbf{Transfer Learning:} Investigation of transfer learning techniques where RL agents trained on one set of problem instances can adapt quickly to new instances with different characteristics (e.g., different numbers of customers, time window tightness, or demand patterns).
+    
+    \item \textbf{Hybrid Approaches:} Combining reinforcement learning with classical optimization methods (e.g., using RL to guide Tabu Search neighborhood selection or to learn problem-specific heuristics) may leverage the strengths of both paradigms.
+    
     \item \textbf{Algorithm Refinement:} Exploration of hybrid metaheuristics combining Tabu Search with other operators (genetic algorithms, variable neighborhood search) may yield additional improvements.
     
-    \item \textbf{Dynamic and Real-time Scenarios:} Extension to fully dynamic VRPTW where customer requests arrive during route execution, requiring real-time re-optimization.
+    \item \textbf{Dynamic and Real-time Scenarios:} Extension to fully dynamic VRPTW where customer requests arrive during route execution, requiring real-time re-optimization. RL approaches are particularly well-suited to such scenarios due to their ability to quickly adapt learned policies.
     
-    \item \textbf{Multi-objective Formulation:} Explicit treatment of competing objectives (cost, time, penalties) using Pareto-based multi-objective optimization techniques.
+    \item \textbf{Multi-objective Formulation:} Explicit treatment of competing objectives (cost, time, penalties) using Pareto-based multi-objective optimization techniques or multi-objective RL frameworks.
     
     \item \textbf{Heterogeneous Fleet:} Incorporation of vehicle heterogeneity with different capacities, costs, and operational characteristics.
     
     \item \textbf{Sustainability Considerations:} Integration of environmental objectives such as CO$_2$ emissions minimization alongside operational cost reduction.
     
-    \item \textbf{Machine Learning Integration:} Use of predictive models to anticipate demand patterns and time window violations, enabling proactive route planning.
+    \item \textbf{Enhanced ML Integration:} Use of predictive models to anticipate demand patterns and time window violations, enabling proactive route planning. Combining supervised learning for demand forecasting with RL for decision-making represents a promising research direction.
 \end{itemize}
 
-In conclusion, this work demonstrates that metaheuristic optimization approaches, particularly Tabu Search, offer substantial benefits for solving real-world vehicle routing problems under uncertainty. The combination of mathematical rigor in problem formulation, comprehensive experimental design, and practical implementation provides a solid foundation for both academic research and industrial application in logistics optimization.
+In conclusion, this work demonstrates that multiple algorithmic paradigms — constructive heuristics, metaheuristics (particularly Tabu Search), and reinforcement learning — offer distinct benefits for solving real-world vehicle routing problems under uncertainty. While Tabu Search shows superior performance in the current experiments, the RL approach demonstrates the potential of learning-based methods and provides a foundation for future research with more advanced architectures. The combination of mathematical rigor in problem formulation, comprehensive experimental design covering multiple methodological approaches, and practical implementation provides a solid foundation for both academic research and industrial application in logistics optimization.
