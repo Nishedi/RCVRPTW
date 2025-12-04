@@ -165,26 +165,24 @@ namespace RCVRPTW
         }
 
         /// <summary>
-        /// Analyze reward distribution during training
+        /// Observe training behavior and provide guidance on reward patterns.
+        /// Note: Full reward distribution analysis requires extending QLearningAgent to track per-episode rewards.
         /// </summary>
-        public static void AnalyzeRewardDistribution(string instancePath, int episodes = 50)
+        public static void ObserveTrainingBehavior(string instancePath, int episodes = 50)
         {
-            Console.WriteLine("Analyzing Reward Distribution During Training\n");
+            Console.WriteLine("Observing Training Behavior\n");
             
             Instance instance = new Instance(instancePath, vehicleNumbers: 100);
             
-            // TODO: Extend QLearningAgent to track per-episode rewards
-            // For now, run training and observe console output
-            
             Console.WriteLine($"Training for {episodes} episodes...");
-            Console.WriteLine("Watch for:");
+            Console.WriteLine("Watch the console output for:");
             Console.WriteLine("  - Rewards should gradually increase (become less negative)");
             Console.WriteLine("  - If rewards stay very negative (< -10000), penalties are too high");
             Console.WriteLine("  - If rewards don't improve, learning rate or state representation may be the issue\n");
             
             var solution = RLSolver.Run(instance, trainingEpisodes: episodes, seed: 42);
             
-            Console.WriteLine("\nIf you observed:");
+            Console.WriteLine("\nInterpretation Guide:");
             Console.WriteLine("  • Rewards around -100 to -1000: Reasonable, algorithm is learning");
             Console.WriteLine("  • Rewards around -10000 to -100000: Penalty weights are too high!");
             Console.WriteLine("  • Rewards not improving: Learning rate too high or state space too large");
@@ -240,7 +238,7 @@ namespace RCVRPTW
                 Console.WriteLine($"   You specified: {episodes:N0} episodes");
                 Console.WriteLine($"   Recommended: 50-500 episodes for typical instances");
                 Console.WriteLine($"   This will take approximately {episodes * 0.009:F0} seconds");
-                Console.WriteLine("\n   Did you mean to use {0}?", episodes / 1000000);
+                Console.WriteLine($"\n   Did you mean to use {episodes / 1000000}?");
             }
             else if (episodes > 1000)
             {

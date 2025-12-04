@@ -9,9 +9,9 @@ namespace RCVRPTW
     public static class RLAnalysisExample
     {
         /// <summary>
-        /// Main entry point for RL analysis examples
+        /// Entry point for RL analysis examples
         /// </summary>
-        public static void Main(string[] args)
+        public static void RunExample(string[] args)
         {
             Console.WriteLine("RCVRPTW - RL Performance Analysis Examples\n");
             
@@ -38,8 +38,8 @@ namespace RCVRPTW
                     RunMultiInstanceTest();
                     break;
                     
-                case "rewards":
-                    AnalyzeRewards(instancePath);
+                case "observe":
+                    ObserveTraining(instancePath);
                     break;
                     
                 case "validate":
@@ -59,7 +59,7 @@ namespace RCVRPTW
             Console.WriteLine("  full <instance>     - Run comprehensive diagnostics");
             Console.WriteLine("  quick <instance>    - Quick Greedy vs RL comparison");
             Console.WriteLine("  multi               - Test multiple instances");
-            Console.WriteLine("  rewards <instance>  - Analyze reward distribution");
+            Console.WriteLine("  observe <instance>  - Observe training behavior");
             Console.WriteLine("  validate <episodes> - Check if episode count is reasonable");
             Console.WriteLine("\nExamples:");
             Console.WriteLine("  dotnet run full \"pliki/100 lokacji/C101.txt\"");
@@ -113,13 +113,13 @@ namespace RCVRPTW
             }
         }
 
-        private static void AnalyzeRewards(string instancePath)
+        private static void ObserveTraining(string instancePath)
         {
-            Console.WriteLine($"Analyzing reward distribution on: {instancePath}\n");
+            Console.WriteLine($"Observing training behavior on: {instancePath}\n");
             
             try
             {
-                RLDiagnostics.AnalyzeRewardDistribution(instancePath, episodes: 50);
+                RLDiagnostics.ObserveTrainingBehavior(instancePath, episodes: 50);
             }
             catch (Exception ex)
             {

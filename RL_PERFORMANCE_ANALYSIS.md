@@ -7,7 +7,7 @@ The Reinforcement Learning (RL) implementation for RCVRPTW is currently underper
 ## Observed Performance Issues
 
 ### User Report (@Nishedi)
-**Status**: Słabo działa RL (RL works poorly)
+**Status**: "Słabo działa RL" (Polish: "RL works poorly")
 
 **Training Results:**
 - Episodes: 50,000,000 (likely error - should be 50)
