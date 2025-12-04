@@ -11,6 +11,14 @@ namespace RCVRPTW
     /// </summary>
     internal class QLearningAgent
     {
+        // Configuration constants
+        private const int LOAD_DISCRETIZATION_LEVELS = 10;
+        private const int TIME_DISCRETIZATION_LEVELS = 10;
+        private const double DEFAULT_TIME_HORIZON = 500.0;
+        private const double CAPACITY_VIOLATION_TOLERANCE = 1.1; // Allow 10% capacity violation during training
+        private const double TIME_WINDOW_PENALTY_WEIGHT = 1000.0;
+        private const double CAPACITY_PENALTY_WEIGHT = 10000.0;
+        
         private Dictionary<string, Dictionary<int, double>> qTable;
         private Random random;
         private double learningRate;
@@ -104,8 +112,9 @@ namespace RCVRPTW
                                                  Instance instance)
         {
             // Simplified state representation: current location, load level, time level, number of unvisited
-            int loadLevel = (int)(currentLoad / instance.Vehicles[0].Capacity * 10); // 0-10 scale
-            int timeLevel = (int)(currentTime / 500 * 10); // 0-10 scale based on typical time horizon
+            double capacity = Math.Max(1.0, instance.Vehicles[0].Capacity); // Avoid division by zero
+            int loadLevel = (int)(currentLoad / capacity * LOAD_DISCRETIZATION_LEVELS);
+            int timeLevel = (int)(currentTime / DEFAULT_TIME_HORIZON * TIME_DISCRETIZATION_LEVELS);
             int unvisitedCount = unvisitedLocations.Count;
             
             return $"{currentLocation}_{loadLevel}_{timeLevel}_{unvisitedCount}";
@@ -132,7 +141,9 @@ namespace RCVRPTW
             double capacityViolation = Math.Max(0, newLoad - instance.Vehicles[0].Capacity);
             
             // Composite reward (negative cost)
-            double reward = -(travelCost + waitingTime + 1000 * (earlyPenalty + latePenalty) + 10000 * capacityViolation);
+            double reward = -(travelCost + waitingTime + 
+                            TIME_WINDOW_PENALTY_WEIGHT * (earlyPenalty + latePenalty) + 
+                            CAPACITY_PENALTY_WEIGHT * capacityViolation);
             
             return reward;
         }
@@ -168,7 +179,8 @@ namespace RCVRPTW
                     foreach (int locId in unvisited)
                     {
                         Location loc = instance.Locations.First(l => l.Id == locId);
-                        if (currentLoad + loc.Demand <= instance.Vehicles[0].Capacity * 1.1) // Allow slight violation
+                        // Allow slight capacity violation during training for exploration
+                        if (currentLoad + loc.Demand <= instance.Vehicles[0].Capacity * CAPACITY_VIOLATION_TOLERANCE)
                         {
                             feasibleActions.Add(locId);
                         }
@@ -203,7 +215,7 @@ namespace RCVRPTW
                     List<int> nextFeasibleActions = unvisited
                         .Where(locId => {
                             var loc = instance.Locations.First(l => l.Id == locId);
-                            return currentLoad + loc.Demand <= instance.Vehicles[0].Capacity * 1.1;
+                            return currentLoad + loc.Demand <= instance.Vehicles[0].Capacity * CAPACITY_VIOLATION_TOLERANCE;
                         })
                         .ToList();
                     
@@ -219,7 +231,8 @@ namespace RCVRPTW
                 
                 if ((episode + 1) % 10 == 0)
                 {
-                    Console.WriteLine($"Episode {episode + 1}/{episodes}, Avg Reward: {episodeReward / Math.Max(1, steps)}, Epsilon: {epsilon:F3}");
+                    string avgRewardStr = steps > 0 ? $"{episodeReward / steps:F2}" : "N/A";
+                    Console.WriteLine($"Episode {episode + 1}/{episodes}, Avg Reward: {avgRewardStr}, Epsilon: {epsilon:F3}");
                 }
             }
             

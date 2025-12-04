@@ -17,7 +17,7 @@ namespace RCVRPTW
             Console.WriteLine("=== RL Solver Example: Single Instance ===\n");
             
             // Load a problem instance
-            string filename = "pliki//100 lokacji//C101.txt";
+            string filename = System.IO.Path.Combine("pliki", "100 lokacji", "C101.txt");
             Instance instance = new Instance(filename, vehicleNumbers: 100);
             
             Console.WriteLine($"Loaded instance: {filename}");
@@ -64,7 +64,7 @@ namespace RCVRPTW
         {
             Console.WriteLine("=== RL Solver Example: Training Episode Comparison ===\n");
             
-            string filename = "pliki//100 lokacji//C101.txt";
+            string filename = System.IO.Path.Combine("pliki", "100 lokacji", "C101.txt");
             Instance instance = new Instance(filename, vehicleNumbers: 100);
             
             Console.WriteLine($"Testing different training episode counts on {filename}\n");
@@ -99,9 +99,9 @@ namespace RCVRPTW
             Console.WriteLine("=== RL Solver Example: Multiple Instances ===\n");
             
             string[] instances = new string[] { 
-                "pliki//100 lokacji//C101.txt",
-                "pliki//100 lokacji//R101.txt",
-                "pliki//100 lokacji//RC101.txt"
+                System.IO.Path.Combine("pliki", "100 lokacji", "C101.txt"),
+                System.IO.Path.Combine("pliki", "100 lokacji", "R101.txt"),
+                System.IO.Path.Combine("pliki", "100 lokacji", "RC101.txt")
             };
             
             foreach (string filename in instances)
@@ -135,9 +135,10 @@ namespace RCVRPTW
             
             Console.WriteLine($"Generating {numberScenarios} stochastic scenarios for {fileType}...\n");
             
+            string instancePath = System.IO.Path.Combine("pliki", "100 lokacji", fileType + ".txt");
             List<Scenario> scenarios = InstanceGenerator.GenerateManyScenarios(
                 numberScenarios, 
-                "pliki//100 lokacji//" + fileType + ".txt"
+                instancePath
             );
             
             Console.WriteLine("Running RL experiments on scenarios...\n");
