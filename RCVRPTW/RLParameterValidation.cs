@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 
 namespace RCVRPTW
 {
@@ -9,7 +10,7 @@ namespace RCVRPTW
     public static class RLParameterValidation
     {
         // Configuration constants
-        private static readonly string DEFAULT_TEST_INSTANCE = System.IO.Path.Combine("pliki", "100 lokacji", "C101.txt");
+        private static readonly string DEFAULT_TEST_INSTANCE = Path.Combine("pliki", "100 lokacji", "C101.txt");
         private const int VALIDATION_WARNING_TEST_EPISODES = 11000; // Just above threshold to test warning
         private const int VALIDATION_QUICK_TEST_EPISODES = 100; // Quick test for performance check
         private const double MAX_ACCEPTABLE_RL_TO_GREEDY_RATIO = 5.0; // RL should be less than 5x worse than Greedy
@@ -27,7 +28,7 @@ namespace RCVRPTW
             
             // Test 1: Verify warning for high episode count
             Console.WriteLine($"--- Test 1: Episode count validation (should show warning for {VALIDATION_WARNING_TEST_EPISODES}) ---");
-            // Run with high episode count just to trigger warning - solution not used
+            // Solution discarded - only testing warning functionality, not evaluating solution quality
             _ = RLSolver.Run(instance, trainingEpisodes: VALIDATION_WARNING_TEST_EPISODES, seed: 42);
             Console.WriteLine($"Warning test passed.\n");
             
