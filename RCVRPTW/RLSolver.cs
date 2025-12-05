@@ -23,14 +23,21 @@ namespace RCVRPTW
         /// <param name="seed">Random seed for reproducibility</param>
         /// <returns>Best solution found</returns>
         public static Solution Run(Instance instance, 
-                                   int trainingEpisodes = 100, 
-                                   double learningRate = 0.1,
-                                   double discountFactor = 0.95,
+                                   int trainingEpisodes = 500, 
+                                   double learningRate = 0.08,
+                                   double discountFactor = 0.97,
                                    double epsilon = 1.0,
                                    double epsilonDecay = 0.995,
                                    double epsilonMin = 0.01,
                                    int seed = 42)
         {
+            // Validate episode count to prevent unreasonable values
+            if (trainingEpisodes > 10000)
+            {
+                Console.WriteLine($"WARNING: Training episodes ({trainingEpisodes}) is very high and may take excessive time.");
+                Console.WriteLine($"Recommended range: 100-1000 episodes. Consider reducing if not intentional.");
+            }
+            
             Console.WriteLine($"Starting RL Solver with {trainingEpisodes} training episodes");
             Console.WriteLine($"Parameters: LR={learningRate}, Gamma={discountFactor}, Epsilon={epsilon}->{epsilonMin}");
             
@@ -69,11 +76,11 @@ namespace RCVRPTW
         {
             return Run(
                 instance: instance,
-                trainingEpisodes: 50,
-                learningRate: 0.15,
-                discountFactor: 0.9,
+                trainingEpisodes: 300,
+                learningRate: 0.1,
+                discountFactor: 0.95,
                 epsilon: 1.0,
-                epsilonDecay: 0.99,
+                epsilonDecay: 0.995,
                 epsilonMin: 0.05,
                 seed: seed
             );

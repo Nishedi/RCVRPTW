@@ -16,8 +16,8 @@ namespace RCVRPTW
         private const int TIME_DISCRETIZATION_LEVELS = 10;
         private const double DEFAULT_TIME_HORIZON = 500.0;
         private const double CAPACITY_VIOLATION_TOLERANCE = 1.1; // Allow 10% capacity violation during training
-        private const double TIME_WINDOW_PENALTY_WEIGHT = 1000.0;
-        private const double CAPACITY_PENALTY_WEIGHT = 10000.0;
+        private const double TIME_WINDOW_PENALTY_WEIGHT = 10.0;
+        private const double CAPACITY_PENALTY_WEIGHT = 100.0;
         
         private Dictionary<string, Dictionary<int, double>> qTable;
         private Random random;
