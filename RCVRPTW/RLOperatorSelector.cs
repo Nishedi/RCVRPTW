@@ -61,7 +61,7 @@ namespace RCVRPTW
         private int GetState(double currentObjective, double bestObjective, int iteration, int maxIterations)
         {
             // Calculate relative improvement
-            double improvement = (bestObjective - currentObjective) / Math.Max(bestObjective, 1.0);
+            double improvement = (bestObjective - currentObjective) / Math.Max(Math.Abs(bestObjective), 1.0);
             
             // Discretize improvement into 5 bins
             int improvementBin = 0;
@@ -166,8 +166,8 @@ namespace RCVRPTW
             double currentQ = GetQValue(previousState, action);
             
             // Get max Q-value for next state
-            double maxNextQ = double.MinValue;
-            for (int a = 0; a < operators.Length; a++)
+            double maxNextQ = GetQValue(currentState, 0);
+            for (int a = 1; a < operators.Length; a++)
             {
                 double q = GetQValue(currentState, a);
                 if (q > maxNextQ) maxNextQ = q;

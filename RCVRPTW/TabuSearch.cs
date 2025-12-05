@@ -93,8 +93,8 @@ namespace RCVRPTW
             bestSolution.calculateRoutesMetrics(instance);
             (double greedyTotalCost, double greedyTotalPenalty, double greedyVOT) GreedyMetrics = (bestSolution.TotalCost, bestSolution.TotalPenalty, bestSolution.TotalVehicleOperationTime);
             var bestObjective = bestSolution.TotalCost + bestSolution.TotalPenalty + bestSolution.TotalVehicleOperationTime;
-            Console.WriteLine($"TabuSize:{TabuSize} MaxIterations:{MaxIterations} MutationType: RL-based" +
-                $" Initial greedy solution objective: {Math.Round(bestObjective)}");
+            Console.WriteLine($"TabuSize:{TabuSize} MaxIterations:{MaxIterations} MutationType: RL-based " +
+                $"Initial greedy solution objective: {Math.Round(bestObjective)}");
             Console.WriteLine($"RL Training enabled - maxTime: {maxTime}s");
             
             Solution currentSolution = bestSolution;

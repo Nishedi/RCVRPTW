@@ -151,7 +151,7 @@ namespace RCVRPTW
 
         private static void AppendResultToCsv(string path, ExperimentResult res)
         {
-            var header = "ScenarioId;Filename;Iterations;TabuSize;MutationType;UseRL;Repeat;Seed;GreedyOjective;GreedyTotalCost;GreedyTotalPenalty;GreedyTotalVehicleOperationTime;Objective;TotalCost;TotalPenalty;TotalVehicleOperationTime;RoutesCount;DurationMs;GTR";
+            var header = "ScenarioId;Filename;Iterations;TabuSize;MutationType;UseRL;Repeat;Seed;GreedyObjective;GreedyTotalCost;GreedyTotalPenalty;GreedyTotalVehicleOperationTime;Objective;TotalCost;TotalPenalty;TotalVehicleOperationTime;RoutesCount;DurationMs;GTR";
             var exists = File.Exists(path);
             using (var sw = new StreamWriter(path, append: true))
             {
