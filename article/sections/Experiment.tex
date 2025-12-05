@@ -1,6 +1,6 @@
 %Experiment
 \section{Experiment}
-This section describes the experimental setting, including the dataset, scenario generation procedure, implementation details, and evaluation metrics. We then present the experimental results for each hypothesis.
+This section describes the experimental setting, including the dataset, scenario generation procedure, implementation details, and evaluation metrics. Then the experimental results for each hypothesis are presented.
 
 \subsection{Dataset and Implementation Description}
 
@@ -14,13 +14,15 @@ All experiments were conducted on benchmark instances derived from the Solomon C
 
 Each original Solomon instance was extended into a stochastic scenario set using a custom scenario generator. For every instance, $500$ stochastic scenarios were created, resulting in a total of $3000$ scenarios. The generator applies random perturbations to customer time windows and demands, modelling uncertain operational conditions such as delays, customer request variability, or temporal disturbances. 
 
-The implementation was developed in C\#. The running configurations includes three parameters i.e.  \texttt{iterations = 100}, \texttt{tabuSize=30} and mutation operator -- \texttt{swap}. Code was prepared to full parallel execution. For each scenario, both a greedy baseline and Tabu Search were executed, producing detailed route-level and cost-level metrics.
+The implementation was developed in C\#. The running configurations includes three parameters i.e.  \texttt{iterations = 200}, \texttt{tabuSize=40} and mutation operator -- \texttt{swap}. These values were selected based on the outcomes of the parameter tuning experiments. Code was prepared to full parallel execution. For each scenario, both a greedy baseline and Tabu Search were executed, producing detailed route-level and cost-level metrics.
 
-For every execution, the framework recorded the following information: objective values for both methods, total travel cost, time-window penalties, total vehicle operation time, number of routes, runtime, and the full route structure (GTR --- Global Tour Representation). All results were appended to a CSV file for further statistical analysis.
+For every execution, the framework recorded the following information: objective values for both methods, total travel cost, time-window penalties, total vehicle operation time, number of routes, runtime, and the full route structure (GTR). All results were appended to a CSV file for further statistical analysis.
 
 \subsection{Computational Environment}
 
-All experiments were conducted on a Linux-based workstation equipped with a 13th Gen Intel Core i7-13700K processor and 31 GB of RAM. The system operated under Ubuntu 24.04.2~LTS, using the standard .NET runtime environment. Parallel execution was enabled through the Task Parallel Library, allowing scenario simulations to be distributed across the available CPU cores.
+All experiments were conducted on a Linux-based workstation equipped with a 13th Gen Intel Core i7-13700K processor and 32 GB of RAM. The system operated under Ubuntu 24.04.2~LTS, using the standard .NET runtime environment. Parallel execution was enabled through the Task Parallel Library, allowing scenario simulations to be distributed across the available CPU cores.
+
+\input{sections/ParameterTuning}
 
 \subsection{Experiment A: Expected Cost Comparison (H1)}
 
@@ -41,12 +43,12 @@ The worst-case cost is also significantly lower for Tabu Search (18750.35) compa
         \hline\hline
         Method & Mean & Std & Min & Max \\
         \hline\hline
-        Greedy & 10830.74 & 6266.17 & 5169.75 & 22092.06 \\ \hline
-        Tabu   &  9096.43 & 5838.98 & 4271.48 & 18750.35 \\ 
+        Greedy & 13735.27 & 9393.89 & 5687.00 & 33634.45 \\ \hline
+        Tabu   & 11286.18 & 8082.21 & 4886.36 & 26737.48 \\ 
         \hline\hline
         Method & $p_{50}$ & $p_{75}$ & $p_{90}$ & $p_{95}$ \\ \hline
-        Greedy & 6935.87 & 18359.86 & 20717.53 & 21078.65 \\ \hline
-        Tabu   & 5432.04 & 16759.41 & 17797.22 & 18037.84 \\
+        Greedy & 7725.60&23147.31&29886.59&30627.51 \\ \hline
+        Tabu   & 5990.30&20092.64&24795.62&25260.80 \\
         \hline\hline
     \end{tabular}
 \end{table}
@@ -75,32 +77,43 @@ The combined evidence from dispersion metrics and ECDF analysis clearly confirms
 \end{figure*}
 
 \subsection{Experiment C: Analysis of Time-Window Violation Penalties (H3)}
+The third experiment focuses on the penalty component of the objective function, which reflects violations of customer time windows under stochastic perturbations. In this setting, the objective function assigns a weight of 1 to travel distance, 1 to total operation time, and a weight of 2 to the total penalty associated with time-window violations. Additionally, late-arrival penalties—computed as the excess of service completion time over the window closing time—are weighted by an additional factor of 2. This formulation places strong emphasis on limiting tardiness, prioritizing temporal feasibility over spatial efficiency.
 
-The third experiment focuses on the penalty component of the objective function, which reflects violations of customer time windows under stochastic perturbations. Contrary to the initial expectation expressed in Hypothesis~H3, the results indicate that the greedy algorithm produces lower penalty values than Tabu Search. Since many scenarios contain time-window configurations in which service duration exceeds the available window length, penalties are unavoidable. However, the greedy approach consistently results in smaller penalty values across the tested scenarios.
+The results indicate that Tabu Search produces lower penalty values than the greedy algorithm. Because many scenarios contain time-window configurations in which customer service duration exceeds the available window, penalties are unavoidable. However, Tabu Search consistently reduces the number and magnitude of violations across the tested scenarios.
 
-This result is consistent with the operational characteristics of both methods. Greedy constructs routes sequentially and prioritises locally feasible insertions, which naturally preserves time-window constraints at the cost of reduced global exploration. In contrast, Tabu Search evaluates a broader neighbourhood of moves and may temporarily relax time-window feasibility in order to achieve improvements in travel distance or crew operating time. As a result, Tabu Search incurs higher penalties in a subset of scenarios, but this increase is offset by substantial gains in other components of the objective function (such as .
+This behaviour can be explained by the search dynamics of both methods. The greedy algorithm constructs routes sequentially and commits early to locally feasible insertions, which often limits its ability to reorganise visit sequences later. As a consequence, greedy solutions frequently produce tightly packed routes with accumulated delays, resulting in increased time-window violations. In contrast, Tabu Search explores a broader neighbourhood of moves, allowing controlled reordering and local relaxation in early stages of the search. This flexibility enables the algorithm to reorganise customer sequences, reduce lateness, and eliminate unnecessary delay propagation.
 
-Table~\ref{tab:expC_penalty_components} summarises the decomposition of the objective value. Although Greedy achieves lower penalties on average ($1414.67$ vs. $1598.55$), Tabu Search significantly reduces both the
-travel cost component ($2722.83$ vs. $1826.93$) and the total vehicle operation time ($6693.24$ vs. $5670.95$). Because the full objective is the sum of these three elements, the reductions in route length and operation time more than compensate for the increase in penalties. Consequently, Tabu Search produces a substantially lower overall objective value ($10830.74$
-vs. $9096.43$).
 
-Therefore, Experiment~C provides an important complementary insight: although Tabu Search generates higher time-window penalties, it achieves shorter routes and significantly lower service time, resulting in superior global performance. This trade-off exemplifies a common characteristic of metaheuristic approaches to VRPTW, where limited feasibility relaxation can lead to globally advantageous solutions.
+Table~\ref{tab:avg_penalty_components} summarises the decomposition of the updated objective function. Although Tabu Search reduces penalties substantially ($3373.77$ vs.\ $4313.23$), it also achieves lower travel cost and operation time. Given that penalties are weighted by a factor of 2 in the objective function, their reduction has a particularly strong impact on overall performance. As a result, Tabu Search produces a significantly lower total objective value ($11286.18$ vs.\ $13735.27$).
+
+Therefore, Experiment~C provides an important insight regarding Hypothesis~H3: strengthening the penalty weight amplifies the importance of temporal feasibility, and under these conditions Tabu Search outperforms the greedy baseline not only in route length and service time but also in time-window compliance. This confirms that the metaheuristic is better equipped to handle temporal uncertainty and dynamic delay propagation typical of HCVRP-TW instances.
+
 
 \begin{table}[ht]
 \renewcommand{\arraystretch}{1.3}
 \centering
-\caption{Comparison of objective components for Greedy and Tabu Search in 
-Experiment~C.}
-\label{tab:expC_penalty_components}
+\caption{Comparison of average objective components for Greedy and Tabu Search.}
+\label{tab:avg_penalty_components}
 \begin{tabular}{l|c|c|c|c}
 \hline\hline
 Method & TotalCost & TotalPenalty & OperationTime & Objective \\
 \hline\hline
-Greedy & 2722.83 & 1414.67 & 6693.24 & 10830.74 \\ \hline
-Tabu   & 1826.93 & 1598.55 & 5670.95 & 9096.43 \\
+Greedy & 2727.24 & 4313.23 & 6694.80 & 13735.27 \\ \hline
+Tabu   & 1988.19 & 3373.77 & 5924.21 & 11286.18 \\
 \hline\hline
 \end{tabular}
 \end{table}
+
+
+
+
+
+
+
+
+
+
+
 
 
 \subsection{Experiment D: Tail Loss Reduction (H4)}

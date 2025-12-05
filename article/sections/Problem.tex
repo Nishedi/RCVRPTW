@@ -241,7 +241,7 @@ where the first term represents the total travel distance, the second term accou
 
 \subsubsection{Constraints}
 
-The objective function \eqref{eq:objective} is minimized subject to the following constraints:
+The objective function \ref{eq:objective} is minimized subject to the following constraints:
 
 \textbf{Route structure constraints:}
 
@@ -261,7 +261,7 @@ The objective function \eqref{eq:objective} is minimized subject to the followin
     z_{v,i} = \sum_{j\in \mathcal{D}\setminus\{i\}}x_{v,j,i} = \sum_{j\in \mathcal{D}\setminus\{i\}}x_{v,i,j}, \quad \forall v \in \mathcal{V}, i \in \mathcal{N}
 \end{equation}
 
-Constraint \eqref{eq:one_visit} ensures that each customer location is visited exactly once by one vehicle. Constraint \eqref{eq:flow_balance} enforces flow conservation: if a vehicle arrives at a location, it must also depart from it. Constraint \eqref{eq:start_end_in_depot} requires that each vehicle starts and ends at the depot. Constraint \eqref{eq:edgevisitcorrelation} links the visit indicator variable with the routing variables.
+Constraint \ref{eq:one_visit} ensures that each customer location is visited exactly once by one vehicle. Constraint \ref{eq:flow_balance} enforces flow conservation: if a vehicle arrives at a location, it must also depart from it. Constraint \ref{eq:start_end_in_depot} requires that each vehicle starts and ends at the depot. Constraint \ref{eq:edgevisitcorrelation} links the visit indicator variable with the routing variables.
 
 \textbf{Time window constraints:}
 
