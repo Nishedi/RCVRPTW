@@ -10,6 +10,8 @@ namespace RCVRPTW
     /// </summary>
     internal class RLSolver
     {
+        // Configuration constants
+        private const int MAX_REASONABLE_EPISODES = 10000;
         /// <summary>
         /// Run Q-Learning based solution with training and inference phases
         /// </summary>
@@ -32,7 +34,7 @@ namespace RCVRPTW
                                    int seed = 42)
         {
             // Validate episode count to prevent unreasonable values
-            if (trainingEpisodes > 10000)
+            if (trainingEpisodes > MAX_REASONABLE_EPISODES)
             {
                 Console.WriteLine($"WARNING: Training episodes ({trainingEpisodes}) is very high and may take excessive time.");
                 Console.WriteLine($"Recommended range: 100-1000 episodes. Consider reducing if not intentional.");

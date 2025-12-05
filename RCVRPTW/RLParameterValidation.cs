@@ -8,12 +8,17 @@ namespace RCVRPTW
     /// </summary>
     public static class RLParameterValidation
     {
+        // Configuration constants
+        private const string DEFAULT_TEST_INSTANCE = "pliki/100 lokacji/C101.txt";
+        private const int VALIDATION_WARNING_TEST_EPISODES = 11000; // Just above threshold to test warning
+        private const int VALIDATION_QUICK_TEST_EPISODES = 100; // Quick test for performance check
+        private const double MAX_ACCEPTABLE_RL_TO_GREEDY_RATIO = 5.0; // RL should be less than 5x worse than Greedy
         public static void RunValidation()
         {
             Console.WriteLine("=== RL Parameter Validation Test ===\n");
             
             // Load a small instance for quick testing
-            string filename = "pliki/100 lokacji/C101.txt";
+            string filename = DEFAULT_TEST_INSTANCE;
             Console.WriteLine($"Loading instance: {filename}");
             Instance instance = new Instance(filename, vehicleNumbers: 100);
             
@@ -21,14 +26,14 @@ namespace RCVRPTW
             Console.WriteLine($"Number of vehicles: {instance.Vehicles.Count}\n");
             
             // Test 1: Verify warning for high episode count
-            Console.WriteLine("--- Test 1: Episode count validation (should show warning for 15000) ---");
-            var solution1 = RLSolver.Run(instance, trainingEpisodes: 15000, seed: 42);
+            Console.WriteLine($"--- Test 1: Episode count validation (should show warning for {VALIDATION_WARNING_TEST_EPISODES}) ---");
+            var solution1 = RLSolver.Run(instance, trainingEpisodes: VALIDATION_WARNING_TEST_EPISODES, seed: 42);
             Console.WriteLine($"Warning test passed.\n");
             
-            // Test 2: Quick run with new defaults (reduced to 100 for quick test)
-            Console.WriteLine("--- Test 2: Quick test with 100 episodes ---");
+            // Test 2: Quick run with new defaults
+            Console.WriteLine($"--- Test 2: Quick test with {VALIDATION_QUICK_TEST_EPISODES} episodes ---");
             var stopwatch = Stopwatch.StartNew();
-            var solution2 = RLSolver.Run(instance, trainingEpisodes: 100, seed: 42);
+            var solution2 = RLSolver.Run(instance, trainingEpisodes: VALIDATION_QUICK_TEST_EPISODES, seed: 42);
             stopwatch.Stop();
             
             double objective2 = solution2.TotalCost + solution2.TotalPenalty + solution2.TotalVehicleOperationTime;
@@ -61,13 +66,13 @@ namespace RCVRPTW
             double ratio = objective2 / greedyObjective;
             Console.WriteLine($"RL/Greedy Ratio: {ratio:F2}x");
             
-            if (ratio < 5.0)
+            if (ratio < MAX_ACCEPTABLE_RL_TO_GREEDY_RATIO)
             {
-                Console.WriteLine("✓ PASS: RL performance is reasonable (less than 5x worse than Greedy)");
+                Console.WriteLine($"✓ PASS: RL performance is reasonable (less than {MAX_ACCEPTABLE_RL_TO_GREEDY_RATIO}x worse than Greedy)");
             }
             else
             {
-                Console.WriteLine($"✗ FAIL: RL performance is still poor ({ratio:F2}x worse than Greedy)");
+                Console.WriteLine($"✗ FAIL: RL performance is still poor ({ratio:F2}x worse than Greedy, threshold is {MAX_ACCEPTABLE_RL_TO_GREEDY_RATIO}x)");
             }
             
             Console.WriteLine("\n=== Validation Complete ===");
