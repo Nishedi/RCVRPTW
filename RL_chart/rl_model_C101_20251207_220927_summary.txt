@@ -1,0 +1,53 @@
+=== RL Training Summary Report ===
+Generated: 2025-12-07 22:14:27
+Total Iterations: 1542
+Total Time: 300.17 seconds
+Average Time per Iteration: 0.1947 seconds
+
+=== Learning Progression ===
+Initial Epsilon: 1.0
+Final Epsilon: 0.462692
+Q-table Size: 26 state-action pairs
+Average Q-value: 0.580208
+Max Q-value: 3.547302
+Min Q-value: -2.512170
+
+=== Operator Performance ===
+Operator    | Selections | Avg Reward | Total Reward | Selection %
+------------|------------|------------|--------------|------------
+swap        |        341 |     0.1838 |        62.66 |      22.11%
+insert      |        290 |    -0.0075 |        -2.18 |      18.81%
+invert      |        193 |    -0.1434 |       -27.68 |      12.52%
+2opt        |        191 |    -0.1239 |       -23.66 |      12.39%
+oropt       |        187 |    -0.4143 |       -77.46 |      12.13%
+cross       |        340 |     0.0306 |        10.39 |      22.05%
+
+=== Objective Improvement ===
+Initial Best Objective: 29953.40
+Final Best Objective: 25466.25
+Total Improvement: 4487.15 (14.98%)
+
+=== Reward Statistics ===
+Total Rewards Collected: 1541
+Average Reward: -0.037597
+Max Reward: 3.408506
+Min Reward: -55.205022
+Positive Rewards: 689 (44.71%)
+Negative Rewards: 73 (4.74%)
+
+=== Q-value Evolution (Checkpoints) ===
+Iteration | Q-table Size | Avg Q-value | Max Q-value | Min Q-value
+----------|--------------|-------------|-------------|------------
+        1 |            7 |    0.048693 |    0.340851 |    0.000000
+      386 |           26 |    0.006962 |    0.596321 |   -4.015421
+      772 |           26 |    0.442956 |    1.826504 |    0.002188
+     1157 |           26 |    0.579734 |    3.337000 |   -1.621468
+
+=== Learning Assessment ===
+Model appears to be learning: YES
+
+Indicators:
+- Q-table growth: 26 state-action pairs explored
+- Epsilon decay: 0.462692 (started at 1.0)
+- Reward trend: Stable/Declining
+- Operator preferences: Developed
