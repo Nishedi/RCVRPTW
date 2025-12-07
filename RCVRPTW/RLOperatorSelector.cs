@@ -17,7 +17,7 @@ namespace RCVRPTW
         private Dictionary<(int, int), double> qTable;
         
         // Available actions (operators)
-        private readonly string[] operators = { "swap", "insert", "invert" };
+        private readonly string[] operators = { "swap", "insert", "invert", "2opt", "oropt", "cross" };
         
         // RL hyperparameters
         private double learningRate;      // Alpha: how much to update Q-values
@@ -355,7 +355,7 @@ namespace RCVRPTW
         public double EpsilonDecay { get; set; }
         public double EpsilonMin { get; set; }
         public Dictionary<string, double> QTable { get; set; } = new Dictionary<string, double>();
-        public int[] OperatorSelectionCount { get; set; } = new int[3];
-        public double[] OperatorRewardSum { get; set; } = new double[3];
+        public int[] OperatorSelectionCount { get; set; } = new int[6];
+        public double[] OperatorRewardSum { get; set; } = new double[6];
     }
 }

@@ -205,6 +205,115 @@ public static class NeighborhoodGeneratorLocation
         return neighbor;
     }
 
+    public static List<Location> twoOpt(List<Location> locations, int i, int j)
+    {
+        // 2-opt: reverses the segment between i and j
+        // This is similar to invert but with a specific VRP interpretation
+        List<Location> neighbor = DeepCopyLocations(locations);
+        if (i > j)
+        {
+            int temp = i;
+            i = j;
+            j = temp;
+        }
+        // Reverse the segment from i to j
+        int left = i;
+        int right = j;
+        while (left < right)
+        {
+            Location tempLocation = neighbor[right];
+            neighbor[right] = neighbor[left];
+            neighbor[left] = tempLocation;
+            left++;
+            right--;
+        }
+        return neighbor;
+    }
+
+    public static List<Location> orOpt(List<Location> locations, int i, int length, int j)
+    {
+        // Or-opt: removes a sequence of 'length' customers starting at position i
+        // and inserts it at position j
+        List<Location> neighbor = DeepCopyLocations(locations);
+        
+        if (i < 0 || i + length > neighbor.Count || j < 0 || j > neighbor.Count)
+            return neighbor; // Invalid parameters, return unchanged
+        
+        // Extract the sequence
+        List<Location> sequence = new List<Location>();
+        for (int k = 0; k < length; k++)
+        {
+            if (i < neighbor.Count)
+                sequence.Add(neighbor[i]);
+        }
+        
+        // Remove the sequence
+        for (int k = 0; k < length && i < neighbor.Count; k++)
+        {
+            neighbor.RemoveAt(i);
+        }
+        
+        // Adjust insertion position if needed
+        int insertPos = j;
+        if (j > i)
+            insertPos = j - length;
+        if (insertPos < 0)
+            insertPos = 0;
+        if (insertPos > neighbor.Count)
+            insertPos = neighbor.Count;
+        
+        // Insert the sequence at the new position
+        neighbor.InsertRange(insertPos, sequence);
+        
+        return neighbor;
+    }
+
+    public static List<Location> crossExchange(List<Location> locations, int i, int lengthI, int j, int lengthJ)
+    {
+        // Cross-exchange: swaps two segments of potentially different lengths
+        List<Location> neighbor = DeepCopyLocations(locations);
+        
+        if (i < 0 || i + lengthI > neighbor.Count || j < 0 || j + lengthJ > neighbor.Count || i == j)
+            return neighbor; // Invalid parameters
+        
+        // Ensure i comes before j
+        if (i > j)
+        {
+            int tempPos = i, tempLen = lengthI;
+            i = j;
+            lengthI = lengthJ;
+            j = tempPos;
+            lengthJ = tempLen;
+        }
+        
+        // Check for overlap
+        if (i + lengthI > j)
+            return neighbor; // Segments overlap, return unchanged
+        
+        // Extract both segments
+        List<Location> segmentI = new List<Location>();
+        List<Location> segmentJ = new List<Location>();
+        
+        for (int k = 0; k < lengthI && i + k < neighbor.Count; k++)
+            segmentI.Add(neighbor[i + k]);
+        
+        for (int k = 0; k < lengthJ && j + k < neighbor.Count; k++)
+            segmentJ.Add(neighbor[j + k]);
+        
+        // Remove both segments (remove the later one first to avoid index issues)
+        for (int k = lengthJ - 1; k >= 0 && j < neighbor.Count; k--)
+            neighbor.RemoveAt(j);
+        
+        for (int k = lengthI - 1; k >= 0 && i < neighbor.Count; k--)
+            neighbor.RemoveAt(i);
+        
+        // Insert segments in swapped positions
+        neighbor.InsertRange(i, segmentJ);
+        neighbor.InsertRange(j - lengthI + lengthJ, segmentI);
+        
+        return neighbor;
+    }
+
     public static List<Solution> GenerateAllSwaps(List<Route> routes, List<Vehicle> vehicles, Instance instance,  string mutationType)
     {
         var neighborsBag = new ConcurrentBag<Solution>();
@@ -236,6 +345,21 @@ public static class NeighborhoodGeneratorLocation
                     neighbor = invert(neighbor, i, j);
                 else if (mutationType == "swap")
                     neighbor = swap(neighbor, i, j);
+                else if (mutationType == "2opt")
+                    neighbor = twoOpt(neighbor, i, j);
+                else if (mutationType == "oropt")
+                {
+                    // For or-opt, use a fixed sequence length (e.g., 2 or 3)
+                    int length = Math.Min(3, Math.Max(1, (j - i) / 3));
+                    neighbor = orOpt(neighbor, i, length, j);
+                }
+                else if (mutationType == "cross")
+                {
+                    // For cross-exchange, use small segment lengths
+                    int lengthI = Math.Min(2, count - i - 1);
+                    int lengthJ = Math.Min(2, count - j - 1);
+                    neighbor = crossExchange(neighbor, i, lengthI, j, lengthJ);
+                }
                 else
                     neighbor = swap(neighbor, i, j); // przypisanie wyniku swap w przypadku default
 
@@ -330,8 +454,21 @@ public static class NeighborhoodGeneratorLocation
                     neighbor = invert(neighbor, i, j);
                 else if (mutationType == "swap")
                     neighbor = swap(neighbor, i, j);
+                else if (mutationType == "2opt")
+                    neighbor = twoOpt(neighbor, i, j);
+                else if (mutationType == "oropt")
+                {
+                    int length = Math.Min(3, Math.Max(1, (j - i) / 3));
+                    neighbor = orOpt(neighbor, i, length, j);
+                }
+                else if (mutationType == "cross")
+                {
+                    int lengthI = Math.Min(2, allLocations.Count - i - 1);
+                    int lengthJ = Math.Min(2, allLocations.Count - j - 1);
+                    neighbor = crossExchange(neighbor, i, lengthI, j, lengthJ);
+                }
                 else 
-                    swap(neighbor, i, j);
+                    neighbor = swap(neighbor, i, j);
                 List<Route> nRoutes = new List<Route>();
                 List<Location> nLocations = new List<Location>();
                 var routeWeight = 0.0;

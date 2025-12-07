@@ -28,10 +28,13 @@ The agent discretizes the search state into bins based on:
 This creates 15 possible states (5 × 3).
 
 ### Action Space
-The agent can choose from three mutation operators:
+The agent can choose from six mutation operators:
 - **swap**: Exchange two locations
 - **insert**: Move a location to a different position
 - **invert**: Reverse a segment of locations
+- **2opt**: 2-opt operation - removes two edges and reconnects the path differently (optimized edge swap)
+- **oropt**: Or-opt operation - removes a sequence of customers and reinserts them elsewhere
+- **cross**: Cross-exchange operation - swaps segments of customers between different parts of routes
 
 ### Learning Algorithm
 Uses Q-learning with:
@@ -135,7 +138,10 @@ When running with RL, you'll see:
 1. **Iteration progress**: Each improvement shows the selected operator
    - `(s)` = swap
    - `(i)` = insert
-   - `(v)` = invert
+   - `(v)` = invert (also used for display of invert)
+   - `(2)` = 2opt
+   - `(o)` = oropt
+   - `(c)` = cross
 
 2. **Periodic updates**: Every 100 iterations showing:
    - Current iteration number
@@ -172,6 +178,9 @@ Operator Usage and Average Reward:
   swap      : selected   845 times, avg reward:   0.2305
   insert    : selected   832 times, avg reward:   0.2810
   invert    : selected   823 times, avg reward:   0.1280
+  2opt      : selected   789 times, avg reward:   0.1950
+  oropt     : selected   801 times, avg reward:   0.2150
+  cross     : selected   810 times, avg reward:   0.1890
 ```
 
 ## Implementation Details
@@ -240,8 +249,8 @@ The trained models are saved as JSON files containing:
     "0,1": 0.156,
     ...
   },
-  "OperatorSelectionCount": [845, 832, 823],
-  "OperatorRewardSum": [194.8, 233.6, 105.3]
+  "OperatorSelectionCount": [845, 832, 823, 789, 801, 810],
+  "OperatorRewardSum": [194.8, 233.6, 105.3, 153.9, 172.2, 153.0]
 }
 ```
 
