@@ -210,11 +210,7 @@ namespace RCVRPTW
             Console.WriteLine("=== RL Model Training Mode ===");
             Console.WriteLine($"Training will run for {maxTime} seconds");
             
-            // Train the model using runWithRL
-            var solution = runWithRL(MaxIterations, TabuSize, instance, maxTime, seed);
-            
-            // Get the trained agent (we need to return it from runWithRL)
-            // For now, we'll create a new method that returns both solution and agent
+            // Train the model and save it
             return TrainRLModel(MaxIterations, TabuSize, instance, maxTime, modelSavePath, seed);
         }
         

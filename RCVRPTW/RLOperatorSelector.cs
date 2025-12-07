@@ -308,14 +308,29 @@ namespace RCVRPTW
                 seed: seed
             );
             
-            // Load Q-table
-            agent.qTable = modelData.QTable.ToDictionary(
-                kvp => {
-                    var parts = kvp.Key.Split(',');
-                    return (int.Parse(parts[0]), int.Parse(parts[1]));
-                },
-                kvp => kvp.Value
-            );
+            // Load Q-table with error handling
+            try
+            {
+                agent.qTable = modelData.QTable.ToDictionary(
+                    kvp => {
+                        var parts = kvp.Key.Split(',');
+                        if (parts.Length != 2)
+                        {
+                            throw new InvalidDataException($"Invalid Q-table key format: {kvp.Key}");
+                        }
+                        if (!int.TryParse(parts[0], out int state) || !int.TryParse(parts[1], out int action))
+                        {
+                            throw new InvalidDataException($"Invalid Q-table key values: {kvp.Key}");
+                        }
+                        return (state, action);
+                    },
+                    kvp => kvp.Value
+                );
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidDataException($"Failed to load Q-table from model file: {ex.Message}", ex);
+            }
             
             // Load statistics
             agent.operatorSelectionCount = modelData.OperatorSelectionCount;
