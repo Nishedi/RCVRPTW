@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.Json;
 
 namespace RCVRPTW
@@ -31,6 +32,11 @@ namespace RCVRPTW
         private double[] operatorRewardSum;
         private Random random;
         
+        // Metrics tracking for learning assessment
+        private List<IterationMetrics> iterationMetrics;
+        private string? metricsLogPath;
+        private bool trackMetrics;
+        
         /// <summary>
         /// Initialize the RL agent with specified hyperparameters
         /// </summary>
@@ -40,18 +46,29 @@ namespace RCVRPTW
             double epsilon = 1.0,
             double epsilonDecay = 0.995,
             double epsilonMin = 0.01,
-            int? seed = null)
+            int? seed = null,
+            bool trackMetrics = false,
+            string? metricsLogPath = null)
         {
             this.learningRate = learningRate;
             this.discountFactor = discountFactor;
             this.epsilon = epsilon;
             this.epsilonDecay = epsilonDecay;
             this.epsilonMin = epsilonMin;
+            this.trackMetrics = trackMetrics;
+            this.metricsLogPath = metricsLogPath;
             
             qTable = new Dictionary<(int, int), double>();
             operatorSelectionCount = new int[operators.Length];
             operatorRewardSum = new double[operators.Length];
             random = seed.HasValue ? new Random(seed.Value) : new Random();
+            iterationMetrics = new List<IterationMetrics>();
+            
+            // Initialize metrics log file if tracking is enabled
+            if (trackMetrics && !string.IsNullOrEmpty(metricsLogPath))
+            {
+                InitializeMetricsLog();
+            }
         }
         
         /// <summary>
@@ -164,7 +181,7 @@ namespace RCVRPTW
             // Calculate reward based on objective improvement
             double reward = CalculateReward(previousObjective, currentObjective);
             
-            // Get current Q-value
+            // Get current Q-value (before update)
             double currentQ = GetQValue(previousState, action);
             
             // Get max Q-value for next state
@@ -178,6 +195,21 @@ namespace RCVRPTW
             // Q-learning update
             double newQ = currentQ + learningRate * (reward + discountFactor * maxNextQ - currentQ);
             qTable[(previousState, action)] = newQ;
+            
+            // Log metrics if tracking is enabled
+            if (trackMetrics)
+            {
+                LogIterationMetrics(
+                    currentIteration,
+                    previousState,
+                    action,
+                    reward,
+                    currentQ,
+                    newQ,
+                    bestObjective,
+                    currentObjective
+                );
+            }
             
             // Track statistics
             operatorRewardSum[action] += reward;
@@ -342,6 +374,258 @@ namespace RCVRPTW
             
             return agent;
         }
+        
+        /// <summary>
+        /// Initialize the metrics log file with header
+        /// </summary>
+        private void InitializeMetricsLog()
+        {
+            if (string.IsNullOrEmpty(metricsLogPath)) return;
+            
+            string? directory = Path.GetDirectoryName(metricsLogPath);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+            
+            string header = "Iteration,Timestamp,State,Action,Operator,Reward,QValueBefore,QValueAfter,Epsilon,BestObjective,CurrentObjective,QTableSize,AvgQValue,MaxQValue,MinQValue";
+            File.WriteAllText(metricsLogPath, header + Environment.NewLine);
+            Console.WriteLine($"Metrics logging initialized: {metricsLogPath}");
+        }
+        
+        /// <summary>
+        /// Log metrics for the current iteration
+        /// </summary>
+        public void LogIterationMetrics(
+            int iteration,
+            int state,
+            int action,
+            double reward,
+            double qValueBefore,
+            double qValueAfter,
+            double bestObjective,
+            double currentObjective)
+        {
+            if (!trackMetrics) return;
+            
+            var metrics = new IterationMetrics
+            {
+                Iteration = iteration,
+                Timestamp = DateTime.Now,
+                State = state,
+                Action = action,
+                Operator = operators[action],
+                Reward = reward,
+                QValueBefore = qValueBefore,
+                QValueAfter = qValueAfter,
+                Epsilon = epsilon,
+                BestObjective = bestObjective,
+                CurrentObjective = currentObjective,
+                QTableSize = qTable.Count,
+                AvgQValue = qTable.Count > 0 ? qTable.Values.Average() : 0.0,
+                MaxQValue = qTable.Count > 0 ? qTable.Values.Max() : 0.0,
+                MinQValue = qTable.Count > 0 ? qTable.Values.Min() : 0.0
+            };
+            
+            iterationMetrics.Add(metrics);
+            
+            // Append to CSV file
+            if (!string.IsNullOrEmpty(metricsLogPath))
+            {
+                string line = $"{metrics.Iteration},{metrics.Timestamp:yyyy-MM-dd HH:mm:ss.fff},{metrics.State},{metrics.Action},{metrics.Operator},{metrics.Reward:F6},{metrics.QValueBefore:F6},{metrics.QValueAfter:F6},{metrics.Epsilon:F6},{metrics.BestObjective:F2},{metrics.CurrentObjective:F2},{metrics.QTableSize},{metrics.AvgQValue:F6},{metrics.MaxQValue:F6},{metrics.MinQValue:F6}";
+                File.AppendAllText(metricsLogPath, line + Environment.NewLine);
+            }
+        }
+        
+        /// <summary>
+        /// Save a comprehensive training summary report
+        /// </summary>
+        public void SaveTrainingSummary(string summaryPath, int totalIterations, double totalTime)
+        {
+            if (!trackMetrics || iterationMetrics.Count == 0) return;
+            
+            var summary = new StringBuilder();
+            summary.AppendLine("=== RL Training Summary Report ===");
+            summary.AppendLine($"Generated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+            summary.AppendLine($"Total Iterations: {totalIterations}");
+            summary.AppendLine($"Total Time: {totalTime:F2} seconds");
+            summary.AppendLine($"Average Time per Iteration: {totalTime / totalIterations:F4} seconds");
+            summary.AppendLine();
+            
+            // Learning progression
+            summary.AppendLine("=== Learning Progression ===");
+            summary.AppendLine($"Initial Epsilon: 1.0");
+            summary.AppendLine($"Final Epsilon: {epsilon:F6}");
+            summary.AppendLine($"Q-table Size: {qTable.Count} state-action pairs");
+            summary.AppendLine($"Average Q-value: {(qTable.Count > 0 ? qTable.Values.Average() : 0.0):F6}");
+            summary.AppendLine($"Max Q-value: {(qTable.Count > 0 ? qTable.Values.Max() : 0.0):F6}");
+            summary.AppendLine($"Min Q-value: {(qTable.Count > 0 ? qTable.Values.Min() : 0.0):F6}");
+            summary.AppendLine();
+            
+            // Operator performance
+            summary.AppendLine("=== Operator Performance ===");
+            summary.AppendLine("Operator    | Selections | Avg Reward | Total Reward | Selection %");
+            summary.AppendLine("------------|------------|------------|--------------|------------");
+            int totalSelections = operatorSelectionCount.Sum();
+            for (int i = 0; i < operators.Length; i++)
+            {
+                double avgReward = operatorSelectionCount[i] > 0 ? operatorRewardSum[i] / operatorSelectionCount[i] : 0.0;
+                double selectionPct = totalSelections > 0 ? (operatorSelectionCount[i] * 100.0 / totalSelections) : 0.0;
+                summary.AppendLine($"{operators[i],-11} | {operatorSelectionCount[i],10} | {avgReward,10:F4} | {operatorRewardSum[i],12:F2} | {selectionPct,10:F2}%");
+            }
+            summary.AppendLine();
+            
+            // Objective improvement
+            if (iterationMetrics.Count > 0)
+            {
+                double initialObjective = iterationMetrics[0].BestObjective;
+                double finalObjective = iterationMetrics[iterationMetrics.Count - 1].BestObjective;
+                double improvement = initialObjective - finalObjective;
+                double improvementPct = (improvement / initialObjective) * 100.0;
+                
+                summary.AppendLine("=== Objective Improvement ===");
+                summary.AppendLine($"Initial Best Objective: {initialObjective:F2}");
+                summary.AppendLine($"Final Best Objective: {finalObjective:F2}");
+                summary.AppendLine($"Total Improvement: {improvement:F2} ({improvementPct:F2}%)");
+                summary.AppendLine();
+            }
+            
+            // Reward statistics
+            var allRewards = iterationMetrics.Select(m => m.Reward).ToList();
+            if (allRewards.Count > 0)
+            {
+                summary.AppendLine("=== Reward Statistics ===");
+                summary.AppendLine($"Total Rewards Collected: {allRewards.Count}");
+                summary.AppendLine($"Average Reward: {allRewards.Average():F6}");
+                summary.AppendLine($"Max Reward: {allRewards.Max():F6}");
+                summary.AppendLine($"Min Reward: {allRewards.Min():F6}");
+                summary.AppendLine($"Positive Rewards: {allRewards.Count(r => r > 0)} ({(allRewards.Count(r => r > 0) * 100.0 / allRewards.Count):F2}%)");
+                summary.AppendLine($"Negative Rewards: {allRewards.Count(r => r < 0)} ({(allRewards.Count(r => r < 0) * 100.0 / allRewards.Count):F2}%)");
+                summary.AppendLine();
+            }
+            
+            // Q-value evolution (sample checkpoints)
+            summary.AppendLine("=== Q-value Evolution (Checkpoints) ===");
+            int[] checkpoints = { 0, totalIterations / 4, totalIterations / 2, 3 * totalIterations / 4, totalIterations - 1 };
+            summary.AppendLine("Iteration | Q-table Size | Avg Q-value | Max Q-value | Min Q-value");
+            summary.AppendLine("----------|--------------|-------------|-------------|------------");
+            foreach (int checkpoint in checkpoints)
+            {
+                if (checkpoint < iterationMetrics.Count)
+                {
+                    var m = iterationMetrics[checkpoint];
+                    summary.AppendLine($"{m.Iteration,9} | {m.QTableSize,12} | {m.AvgQValue,11:F6} | {m.MaxQValue,11:F6} | {m.MinQValue,11:F6}");
+                }
+            }
+            summary.AppendLine();
+            
+            // Learning indicators
+            summary.AppendLine("=== Learning Assessment ===");
+            bool isLearning = AssessIfLearning();
+            summary.AppendLine($"Model appears to be learning: {(isLearning ? "YES" : "NO")}");
+            summary.AppendLine();
+            summary.AppendLine("Indicators:");
+            summary.AppendLine($"- Q-table growth: {qTable.Count} state-action pairs explored");
+            summary.AppendLine($"- Epsilon decay: {epsilon:F6} (started at 1.0)");
+            summary.AppendLine($"- Reward trend: {(GetRewardTrend() > 0 ? "Improving" : "Stable/Declining")}");
+            summary.AppendLine($"- Operator preferences: {(HasOperatorPreferences() ? "Developed" : "Still exploring")}");
+            
+            File.WriteAllText(summaryPath, summary.ToString());
+            Console.WriteLine($"Training summary saved to: {summaryPath}");
+        }
+        
+        /// <summary>
+        /// Assess if the model is learning based on metrics
+        /// </summary>
+        private bool AssessIfLearning()
+        {
+            if (iterationMetrics.Count < 100) return false;
+            
+            // Check if Q-table is growing (exploring states)
+            bool qTableGrowing = qTable.Count > 10;
+            
+            // Check if rewards are improving over time
+            bool rewardImproving = GetRewardTrend() > 0;
+            
+            // Check if operator preferences are developing
+            bool hasPreferences = HasOperatorPreferences();
+            
+            // Check if epsilon has decayed (reducing exploration)
+            bool epsilonDecayed = epsilon < 0.9;
+            
+            // At least 2 of these indicators should be true
+            int indicators = (qTableGrowing ? 1 : 0) + (rewardImproving ? 1 : 0) + 
+                           (hasPreferences ? 1 : 0) + (epsilonDecayed ? 1 : 0);
+            
+            return indicators >= 2;
+        }
+        
+        /// <summary>
+        /// Calculate reward trend (positive = improving, negative = declining)
+        /// </summary>
+        private double GetRewardTrend()
+        {
+            if (iterationMetrics.Count < 100) return 0.0;
+            
+            int windowSize = Math.Min(100, iterationMetrics.Count / 4);
+            var firstWindow = iterationMetrics.Take(windowSize).Select(m => m.Reward).Average();
+            var lastWindow = iterationMetrics.TakeLast(windowSize).Select(m => m.Reward).Average();
+            
+            return lastWindow - firstWindow;
+        }
+        
+        /// <summary>
+        /// Check if operator preferences have developed
+        /// </summary>
+        private bool HasOperatorPreferences()
+        {
+            if (operatorSelectionCount.Sum() < 100) return false;
+            
+            double totalSelections = operatorSelectionCount.Sum();
+            double expectedUniform = totalSelections / operators.Length;
+            
+            // Check if any operator is selected significantly more than uniform distribution
+            return operatorSelectionCount.Any(count => Math.Abs(count - expectedUniform) > expectedUniform * 0.3);
+        }
+        
+        /// <summary>
+        /// Export Q-table to CSV for detailed analysis
+        /// </summary>
+        public void ExportQTableToCSV(string filePath)
+        {
+            var csv = new StringBuilder();
+            csv.AppendLine("State,Action,Operator,QValue");
+            
+            foreach (var kvp in qTable.OrderBy(x => x.Key.Item1).ThenBy(x => x.Key.Item2))
+            {
+                csv.AppendLine($"{kvp.Key.Item1},{kvp.Key.Item2},{operators[kvp.Key.Item2]},{kvp.Value:F6}");
+            }
+            
+            File.WriteAllText(filePath, csv.ToString());
+            Console.WriteLine($"Q-table exported to: {filePath}");
+        }
+    }
+    
+    /// <summary>
+    /// Data structure for tracking metrics at each iteration
+    /// </summary>
+    public class IterationMetrics
+    {
+        public int Iteration { get; set; }
+        public DateTime Timestamp { get; set; }
+        public int State { get; set; }
+        public int Action { get; set; }
+        public string Operator { get; set; } = "";
+        public double Reward { get; set; }
+        public double QValueBefore { get; set; }
+        public double QValueAfter { get; set; }
+        public double Epsilon { get; set; }
+        public double BestObjective { get; set; }
+        public double CurrentObjective { get; set; }
+        public int QTableSize { get; set; }
+        public double AvgQValue { get; set; }
+        public double MaxQValue { get; set; }
+        public double MinQValue { get; set; }
     }
     
     /// <summary>
