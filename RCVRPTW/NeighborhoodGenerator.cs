@@ -208,26 +208,15 @@ public static class NeighborhoodGeneratorLocation
     public static List<Location> twoOpt(List<Location> locations, int i, int j)
     {
         // 2-opt: reverses the segment between i and j
-        // This is similar to invert but with a specific VRP interpretation
-        List<Location> neighbor = DeepCopyLocations(locations);
+        // Named differently from invert for VRP domain clarity, but uses same logic
+        // Ensures i < j before calling invert for consistency
         if (i > j)
         {
             int temp = i;
             i = j;
             j = temp;
         }
-        // Reverse the segment from i to j
-        int left = i;
-        int right = j;
-        while (left < right)
-        {
-            Location tempLocation = neighbor[right];
-            neighbor[right] = neighbor[left];
-            neighbor[left] = tempLocation;
-            left++;
-            right--;
-        }
-        return neighbor;
+        return invert(locations, i, j);
     }
 
     public static List<Location> orOpt(List<Location> locations, int i, int length, int j)
@@ -243,12 +232,12 @@ public static class NeighborhoodGeneratorLocation
         List<Location> sequence = new List<Location>();
         for (int k = 0; k < length; k++)
         {
-            if (i < neighbor.Count)
-                sequence.Add(neighbor[i]);
+            if (i + k < neighbor.Count)
+                sequence.Add(neighbor[i + k]);
         }
         
-        // Remove the sequence
-        for (int k = 0; k < length && i < neighbor.Count; k++)
+        // Remove the sequence (always remove from position i, as removal shifts elements)
+        for (int k = 0; k < sequence.Count && i < neighbor.Count; k++)
         {
             neighbor.RemoveAt(i);
         }
@@ -301,10 +290,12 @@ public static class NeighborhoodGeneratorLocation
             segmentJ.Add(neighbor[j + k]);
         
         // Remove both segments (remove the later one first to avoid index issues)
-        for (int k = lengthJ - 1; k >= 0 && j < neighbor.Count; k--)
+        // Remove from j (the later position first)
+        for (int k = 0; k < segmentJ.Count; k++)
             neighbor.RemoveAt(j);
         
-        for (int k = lengthI - 1; k >= 0 && i < neighbor.Count; k--)
+        // Remove from i (now safe as j was after i)
+        for (int k = 0; k < segmentI.Count; k++)
             neighbor.RemoveAt(i);
         
         // Insert segments in swapped positions
