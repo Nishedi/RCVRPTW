@@ -42,8 +42,10 @@ Uses Q-learning with:
 - **Discount factor (γ)**: 0.9 - importance of future rewards
 - **Epsilon-greedy policy**: Balances exploration vs exploitation
   - Initial epsilon: 1.0 (full exploration)
-  - Epsilon decay: 0.9995 (slow decay for long training)
+  - Epsilon decay: 0.998 (improved decay rate for better learning progression)
   - Minimum epsilon: 0.1 (maintains some exploration)
+- **Reward clipping**: Rewards are clipped to [-5.0, 5.0] to prevent destabilization from extreme values
+- **Q-value clipping**: Q-values are clipped to [-10.0, 10.0] to maintain stable learning
 
 ### Reward Function
 Rewards are calculated based on objective improvement:

@@ -27,6 +27,14 @@ namespace RCVRPTW
         private double epsilonDecay;      // How fast epsilon decreases
         private double epsilonMin;        // Minimum epsilon value
         
+        // Reward clipping parameters to prevent destabilization
+        private const double RewardClipMin = -5.0;
+        private const double RewardClipMax = 5.0;
+        
+        // Q-value clipping parameters to prevent extreme values
+        private const double QValueClipMin = -10.0;
+        private const double QValueClipMax = 10.0;
+        
         // Statistics for tracking
         private int[] operatorSelectionCount;
         private double[] operatorRewardSum;
@@ -46,8 +54,8 @@ namespace RCVRPTW
             double learningRate = 0.1,
             double discountFactor = 0.9,
             double epsilon = 1.0,
-            double epsilonDecay = 0.995,
-            double epsilonMin = 0.01,
+            double epsilonDecay = 0.998,
+            double epsilonMin = 0.1,
             int? seed = null,
             bool trackMetrics = false,
             string? metricsLogPath = null)
@@ -184,6 +192,12 @@ namespace RCVRPTW
             // Calculate reward based on objective improvement
             double reward = CalculateReward(previousObjective, currentObjective);
             
+            // Add bonus for finding new best solution to encourage exploration
+            if (currentObjective < bestObjective)
+            {
+                reward += 1.0; // Bonus reward for new best solution
+            }
+            
             // Get current Q-value (before update)
             double currentQ = GetQValue(previousState, action);
             
@@ -197,6 +211,11 @@ namespace RCVRPTW
             
             // Q-learning update
             double newQ = currentQ + learningRate * (reward + discountFactor * maxNextQ - currentQ);
+            
+            // Clip Q-value to prevent extreme values
+            // Based on metrics analysis: Q-values ranged from -3.22 to 3.65, but could become more extreme
+            newQ = Math.Max(QValueClipMin, Math.Min(QValueClipMax, newQ));
+            
             qTable[(previousState, action)] = newQ;
             
             // Log metrics if tracking is enabled
@@ -224,6 +243,7 @@ namespace RCVRPTW
         /// <summary>
         /// Calculate reward based on objective improvement
         /// Positive reward for improvement, negative for degradation
+        /// Uses clipping to prevent extreme values that can destabilize learning
         /// </summary>
         private double CalculateReward(double previousObjective, double currentObjective)
         {
@@ -231,7 +251,13 @@ namespace RCVRPTW
             double relativeImprovement = improvement / Math.Max(Math.Abs(previousObjective), 1.0);
             
             // Scale reward to be in reasonable range
-            return relativeImprovement * 100.0;
+            double reward = relativeImprovement * 100.0;
+            
+            // Clip reward to prevent extreme values that destabilize learning
+            // Based on metrics analysis: min reward was -55.2, which is too extreme
+            reward = Math.Max(RewardClipMin, Math.Min(RewardClipMax, reward));
+            
+            return reward;
         }
         
         /// <summary>
