@@ -21,6 +21,8 @@ public static class Program
         if (args.Length > 0)
         {
             int maxTime = 1;
+            bool useRL = false;
+            
             if (args.Length > 1)
             {
                 if (int.TryParse(args[1], out int parsedMaxTime))
@@ -28,12 +30,20 @@ public static class Program
                     maxTime = parsedMaxTime;
                 }
             }
+            
+            // Check if RL mode is requested
+            if (args.Length > 2 && args[2].ToLower() == "rl")
+            {
+                useRL = true;
+                Console.WriteLine("RL mode enabled - operators will be selected using reinforcement learning");
+            }
+            
             string fileType = args[0];
-            Console.WriteLine($"Running experiments for file type: {fileType}, maxTime of scenario: {maxTime}");
+            Console.WriteLine($"Running experiments for file type: {fileType}, maxTime of scenario: {maxTime}s, RL: {useRL}");
             List<Scenario> scenarios = InstanceGenerator.GenerateManyScenarios(numberScenarios, "pliki//100 lokacji//" + fileType + ".txt");
             Stopwatch sw = Stopwatch.StartNew();
             
-            List<ExperimentResult> rawResults = ExperimentRunner.RunExperiments(scenarios, iters, tabu, mutationtypes, fileType, repeats: 1, baseSeed: 42, parallel: false,maxTime:maxTime);
+            List<ExperimentResult> rawResults = ExperimentRunner.RunExperiments(scenarios, iters, tabu, mutationtypes, fileType, repeats: 1, baseSeed: 42, parallel: false, maxTime: maxTime, useRL: useRL);
             Console.WriteLine($"\nAll experiments completed in {sw.Elapsed.TotalSeconds} seconds.");
             //Console.WriteLine($"Running parameter tuning for file type: {fileType}");
             //int repeats = 3;
