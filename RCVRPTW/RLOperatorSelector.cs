@@ -36,6 +36,8 @@ namespace RCVRPTW
         private List<IterationMetrics> iterationMetrics;
         private string? metricsLogPath;
         private bool trackMetrics;
+        private List<string> metricsBuffer;
+        private const int MetricsBufferSize = 50; // Flush every 50 iterations
         
         /// <summary>
         /// Initialize the RL agent with specified hyperparameters
@@ -63,6 +65,7 @@ namespace RCVRPTW
             operatorRewardSum = new double[operators.Length];
             random = seed.HasValue ? new Random(seed.Value) : new Random();
             iterationMetrics = new List<IterationMetrics>();
+            metricsBuffer = new List<string>();
             
             // Initialize metrics log file if tracking is enabled
             if (trackMetrics && !string.IsNullOrEmpty(metricsLogPath))
@@ -429,11 +432,31 @@ namespace RCVRPTW
             
             iterationMetrics.Add(metrics);
             
-            // Append to CSV file
+            // Buffer metrics for efficient file writing
+            // Note: Operator names are fixed strings (swap, insert, etc.) without commas,
+            // so no CSV escaping is needed in this specific case
             if (!string.IsNullOrEmpty(metricsLogPath))
             {
                 string line = $"{metrics.Iteration},{metrics.Timestamp:yyyy-MM-dd HH:mm:ss.fff},{metrics.State},{metrics.Action},{metrics.Operator},{metrics.Reward:F6},{metrics.QValueBefore:F6},{metrics.QValueAfter:F6},{metrics.Epsilon:F6},{metrics.BestObjective:F2},{metrics.CurrentObjective:F2},{metrics.QTableSize},{metrics.AvgQValue:F6},{metrics.MaxQValue:F6},{metrics.MinQValue:F6}";
-                File.AppendAllText(metricsLogPath, line + Environment.NewLine);
+                metricsBuffer.Add(line);
+                
+                // Flush buffer periodically for better performance
+                if (metricsBuffer.Count >= MetricsBufferSize)
+                {
+                    FlushMetricsBuffer();
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Flush buffered metrics to file
+        /// </summary>
+        private void FlushMetricsBuffer()
+        {
+            if (metricsBuffer.Count > 0 && !string.IsNullOrEmpty(metricsLogPath))
+            {
+                File.AppendAllLines(metricsLogPath, metricsBuffer);
+                metricsBuffer.Clear();
             }
         }
         
@@ -443,6 +466,9 @@ namespace RCVRPTW
         public void SaveTrainingSummary(string summaryPath, int totalIterations, double totalTime)
         {
             if (!trackMetrics || iterationMetrics.Count == 0) return;
+            
+            // Flush any remaining buffered metrics before creating summary
+            FlushMetricsBuffer();
             
             var summary = new StringBuilder();
             summary.AppendLine("=== RL Training Summary Report ===");
