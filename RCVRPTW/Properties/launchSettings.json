@@ -2,7 +2,7 @@
   "profiles": {
     "RCVRPTW": {
       "commandName": "Project",
-      "commandLineArgs": "\"C101\" 3 300\r\n"
+      "commandLineArgs": " \"C101\" 3 train"
     }
   }
 }

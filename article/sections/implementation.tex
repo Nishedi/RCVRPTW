@@ -87,17 +87,12 @@ Several design choices enhance computational efficiency:
 \subsection{Configuration and Execution}
 
 The main program (\texttt{Program.cs}) defines experimental parameters:
-
-\begin{verbatim}
-int[] iterations = new[] { 100 };
-int[] tabuSizes = new[] { 30 };
-int numberScenarios = 500;
-string[] fileNames = new[] { 
-    "C101.txt", "C201.txt", "R101.txt", 
-    "R201.txt", "RC101.txt", "RC201.txt" 
-};
-string[] mutationTypes = new[] { "swap" };
-\end{verbatim}
+\begin{itemize}
+    \item iterations = 100,
+    \item tabu size = 30,
+    \item number of scenarios = 500,
+    \item mutation type - swap.
+\end{itemize}
 
 The framework generates 500 stochastic scenarios for each of six Solomon benchmark instances (C101, C201, R101, R201, RC101, RC201), resulting in 3,000 total scenarios. Both greedy and Tabu Search are executed on each scenario with the specified parameters. Results are appended to a CSV file (\texttt{results\_raw.csv}) containing columns for scenario ID, algorithm variant, objective components, route structure, and execution time.
 

@@ -11,7 +11,7 @@ public static class Program
 
     static int[] iters = new[] { /*100, 500, 2000*/200 };
     static int[] tabu = new[] { 50 };
-    static int numberScenarios = 500;
+    static int numberScenarios = 1;
     static string[] fileNames = new[] { "pliki//100 lokacji//C101.txt",
         "pliki//100 lokacji//C201.txt", "pliki//100 lokacji//R101.txt", "pliki//100 lokacji//R201.txt",
         "pliki//100 lokacji//RC101.txt", "pliki//100 lokacji//RC201.txt"
@@ -25,7 +25,8 @@ public static class Program
             bool useRL = false;
             string? rlModelPath = null;
             bool trainMode = false;
-            
+            bool both = false;
+
             if (args.Length > 1)
             {
                 if (int.TryParse(args[1], out int parsedMaxTime))
@@ -48,6 +49,7 @@ public static class Program
                     useRL = true;
                     Console.WriteLine("RL Training mode enabled - model will be trained and saved");
                 }
+                
                 else if (args[2].ToLower().StartsWith("model:"))
                 {
                     // Load pre-trained model
@@ -56,11 +58,20 @@ public static class Program
                     Console.WriteLine($"RL mode with pre-trained model: {rlModelPath}");
                 }
             }
-            
+            if(args.Length > 3)
+            {
+                if (args[3].ToLower() == "both")
+                {
+                    both = true;
+                    useRL = true;
+                    Console.WriteLine("Both mode enabled - experiments will be run with and without RL for comparison");
+                }
+            }
+
             string fileType = args[0];
             
             // Training mode - train and save model
-            if (trainMode)
+            if (trainMode && !both)
             {
                 Console.WriteLine($"Training RL model for file type: {fileType}, maxTime: {maxTime}s");
                 List<Scenario> scenarios = InstanceGenerator.GenerateManyScenarios(1, "pliki//100 lokacji//" + fileType + ".txt");
@@ -79,13 +90,28 @@ public static class Program
                     Console.WriteLine("You can now use this model with: dotnet run <fileType> <maxTime> model:" + modelPath);
                 }
             }
+            else if (both)
+            {
+                // Run experiments with and without RL
+                Console.WriteLine($"Running experiments for file type: {fileType}, maxTime of scenario: {maxTime}s, both RL and non-RL");
+                List<Scenario> scenarios = InstanceGenerator.GenerateManyScenarios(numberScenarios, "pliki//100 lokacji//" + fileType + ".txt");
+                Stopwatch sw = Stopwatch.StartNew();
+                
+                Console.WriteLine("Running experiments WITHOUT RL:");
+                List<ExperimentResult> rawResultsNonRL = ExperimentRunner.RunExperiments(scenarios, iters, tabu, mutationtypes, fileType, repeats: 1, baseSeed: 42, parallel: false, maxTime: maxTime, useRL: false);
+                
+                Console.WriteLine("\nRunning experiments WITH RL:");
+                List<ExperimentResult> rawResultsRL = ExperimentRunner.RunExperiments(scenarios, iters, tabu, mutationtypes, fileType, repeats: 1, baseSeed: 42, parallel: false, maxTime: maxTime, useRL: true, rlModelPath: rlModelPath);
+                
+                Console.WriteLine($"\nAll experiments completed in {sw.Elapsed.TotalSeconds} seconds.");
+            }
             else
             {
                 // Regular experiment mode
                 Console.WriteLine($"Running experiments for file type: {fileType}, maxTime of scenario: {maxTime}s, RL: {useRL}");
                 List<Scenario> scenarios = InstanceGenerator.GenerateManyScenarios(numberScenarios, "pliki//100 lokacji//" + fileType + ".txt");
                 Stopwatch sw = Stopwatch.StartNew();
-                
+
                 List<ExperimentResult> rawResults = ExperimentRunner.RunExperiments(scenarios, iters, tabu, mutationtypes, fileType, repeats: 1, baseSeed: 42, parallel: false, maxTime: maxTime, useRL: useRL, rlModelPath: rlModelPath);
                 Console.WriteLine($"\nAll experiments completed in {sw.Elapsed.TotalSeconds} seconds.");
             }
