@@ -263,6 +263,155 @@ You can train a model on one problem instance (e.g., C101) and use it on similar
 2. Use the trained model on multiple similar instances for faster optimization
 3. The model's Q-values guide operator selection based on learned patterns
 
+## Metrics and Learning Assessment
+
+### Training Metrics Output
+
+When training a model with the `train` command, the system automatically generates several files to help assess whether the model is actually learning:
+
+**Generated Files:**
+1. **`<model_name>_metrics.csv`**: Detailed iteration-by-iteration metrics
+   - Iteration number
+   - Timestamp
+   - State and action (operator) selected
+   - Reward received
+   - Q-value before and after update
+   - Current epsilon (exploration rate)
+   - Best and current objective values
+   - Q-table size and statistics
+
+2. **`<model_name>_summary.txt`**: Comprehensive training summary report
+   - Learning progression (epsilon decay, Q-table growth)
+   - Operator performance statistics
+   - Objective improvement over time
+   - Reward statistics
+   - Q-value evolution at checkpoints
+   - Learning assessment with indicators
+
+3. **`<model_name>_qtable.csv`**: Final Q-table export
+   - State-action pairs and their learned Q-values
+   - Useful for detailed analysis of what the model learned
+
+**Example:**
+```bash
+dotnet run C101 3600 train
+```
+
+This generates:
+- `models/rl_model_C101_<timestamp>.json` (the trained model)
+- `models/rl_model_C101_<timestamp>_metrics.csv` (iteration metrics)
+- `models/rl_model_C101_<timestamp>_summary.txt` (training summary)
+- `models/rl_model_C101_<timestamp>_qtable.csv` (Q-table)
+
+### Assessing Learning
+
+The training summary includes an automatic learning assessment based on multiple indicators:
+
+**Learning Indicators:**
+1. **Q-table Growth**: The model explores new state-action pairs
+   - Expected: Should grow from 0 to typically 10-50 pairs
+   - Indicates: The model is experiencing diverse states
+
+2. **Epsilon Decay**: Exploration rate decreases over time
+   - Expected: Should decay from 1.0 toward the minimum (default 0.1)
+   - Indicates: The model is transitioning from exploration to exploitation
+
+3. **Reward Trend**: Average rewards improve over time
+   - Expected: Later iterations should have higher average rewards than early ones
+   - Indicates: The model is learning which operators work better
+
+4. **Operator Preferences**: Selection distribution becomes non-uniform
+   - Expected: Some operators selected more frequently than others
+   - Indicates: The model has learned operator preferences
+
+**Example Summary Interpretation:**
+```
+=== Learning Assessment ===
+Model appears to be learning: YES
+
+Indicators:
+- Q-table growth: 45 state-action pairs explored
+- Epsilon decay: 0.152 (started at 1.0)
+- Reward trend: Improving
+- Operator preferences: Developed
+```
+
+### Using Metrics for Analysis
+
+**Analyzing the Metrics CSV:**
+
+The metrics CSV file can be imported into spreadsheet software or analyzed with Python/R for:
+
+1. **Reward progression plots**: Visualize how rewards change over iterations
+2. **Operator selection over time**: See which operators are chosen as training progresses
+3. **Q-value evolution**: Track how Q-values converge
+4. **Objective improvement curve**: Plot the best objective over time
+
+**Python Example:**
+```python
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Load metrics
+df = pd.read_csv('models/rl_model_C101_timestamp_metrics.csv')
+
+# Plot objective improvement
+plt.figure(figsize=(12, 4))
+
+plt.subplot(1, 3, 1)
+plt.plot(df['Iteration'], df['BestObjective'])
+plt.xlabel('Iteration')
+plt.ylabel('Best Objective')
+plt.title('Objective Improvement')
+
+plt.subplot(1, 3, 2)
+plt.plot(df['Iteration'], df['Epsilon'])
+plt.xlabel('Iteration')
+plt.ylabel('Epsilon')
+plt.title('Exploration Rate Decay')
+
+plt.subplot(1, 3, 3)
+plt.plot(df['Iteration'], df['Reward'])
+plt.xlabel('Iteration')
+plt.ylabel('Reward')
+plt.title('Rewards Over Time')
+
+plt.tight_layout()
+plt.show()
+```
+
+### Detecting Non-Learning
+
+If the model is **not learning**, you might see:
+
+- Q-table size remains very small (< 5 state-action pairs)
+- Epsilon doesn't decay significantly
+- Rewards show no upward trend
+- Operator selection remains uniform (all ~16.7% for 6 operators)
+- Objective improvement is similar to random search
+
+**Possible Causes:**
+- Training time too short (try longer training)
+- Learning rate too high or too low
+- Reward function not providing good signal
+- State representation not capturing important features
+
+### Comparing Results
+
+To determine if RL learning provides benefits over random operator selection:
+
+1. Train a model for sufficient time (1+ hours recommended)
+2. Check the learning assessment in the summary
+3. Compare final Q-values - they should be diverse, not all similar
+4. Compare operator selection percentages - should show clear preferences
+5. Run experiments with and without RL using the `both` mode:
+
+```bash
+dotnet run C101 600 RL both
+```
+
+This runs both RL-based and non-RL experiments for comparison.
+
 ## Future Enhancements
 
 Possible improvements:
