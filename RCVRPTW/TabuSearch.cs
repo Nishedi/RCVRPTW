@@ -219,14 +219,23 @@ namespace RCVRPTW
         /// </summary>
         private static RLOperatorSelector TrainRLModel(int MaxIterations, int TabuSize, Instance instance, int maxTime, string modelSavePath, int? seed)
         {
-            // Initialize RL agent for training
+            // Set up metrics logging paths
+            string? directory = Path.GetDirectoryName(modelSavePath);
+            string baseFileName = Path.GetFileNameWithoutExtension(modelSavePath);
+            string metricsLogPath = Path.Combine(directory ?? ".", $"{baseFileName}_metrics.csv");
+            string summaryPath = Path.Combine(directory ?? ".", $"{baseFileName}_summary.txt");
+            string qTablePath = Path.Combine(directory ?? ".", $"{baseFileName}_qtable.csv");
+            
+            // Initialize RL agent for training with metrics tracking enabled
             var rlAgent = new RLOperatorSelector(
                 learningRate: 0.1,
                 discountFactor: 0.9,
                 epsilon: 1.0,
                 epsilonDecay: 0.9995,
                 epsilonMin: 0.1,
-                seed: seed
+                seed: seed,
+                trackMetrics: true,
+                metricsLogPath: metricsLogPath
             );
 
             Solution bestSolution = GreedyApproaches.generateGreedySolution(instance);
@@ -327,6 +336,11 @@ namespace RCVRPTW
             
             // Save the trained model
             rlAgent.SaveModel(modelSavePath);
+            
+            // Save training metrics and summary (reusing variables declared at the beginning)
+            rlAgent.SaveTrainingSummary(summaryPath, iter, stopwatch.Elapsed.TotalSeconds);
+            rlAgent.ExportQTableToCSV(qTablePath);
+            
             Console.WriteLine("---------------------------------------------------------------------------------------------------------------------------------\n\n");
             
             return rlAgent;
