@@ -43,7 +43,7 @@ Uses Q-learning with:
 - **Epsilon-greedy policy**: Balances exploration vs exploitation
   - Initial epsilon: 1.0 (full exploration)
   - Epsilon decay: 0.998 (improved decay rate for better learning progression)
-  - Minimum epsilon: 0.1 (maintains some exploration)
+  - Minimum epsilon: 0.1 (maintains 10% exploration even after extensive training, helping avoid local optima)
 - **Reward clipping**: Rewards are clipped to [-5.0, 5.0] to prevent destabilization from extreme values
 - **Q-value clipping**: Q-values are clipped to [-10.0, 10.0] to maintain stable learning
 
