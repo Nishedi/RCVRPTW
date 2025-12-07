@@ -3,6 +3,7 @@
 using Microsoft.VisualBasic.FileIO;
 using RCVRPTW;
 using System.Diagnostics;
+using System.IO;
 
 
 public static class Program
@@ -22,6 +23,8 @@ public static class Program
         {
             int maxTime = 1;
             bool useRL = false;
+            string? rlModelPath = null;
+            bool trainMode = false;
             
             if (args.Length > 1)
             {
@@ -31,20 +34,61 @@ public static class Program
                 }
             }
             
-            // Check if RL mode is requested
-            if (args.Length > 2 && args[2].ToLower() == "rl")
+            // Check if RL mode is requested or training mode
+            if (args.Length > 2)
             {
-                useRL = true;
-                Console.WriteLine("RL mode enabled - operators will be selected using reinforcement learning");
+                if (args[2].ToLower() == "rl")
+                {
+                    useRL = true;
+                    Console.WriteLine("RL mode enabled - operators will be selected using reinforcement learning");
+                }
+                else if (args[2].ToLower() == "train")
+                {
+                    trainMode = true;
+                    useRL = true;
+                    Console.WriteLine("RL Training mode enabled - model will be trained and saved");
+                }
+                else if (args[2].ToLower().StartsWith("model:"))
+                {
+                    // Load pre-trained model
+                    rlModelPath = args[2].Substring(6); // Remove "model:" prefix
+                    useRL = true;
+                    Console.WriteLine($"RL mode with pre-trained model: {rlModelPath}");
+                }
             }
             
             string fileType = args[0];
-            Console.WriteLine($"Running experiments for file type: {fileType}, maxTime of scenario: {maxTime}s, RL: {useRL}");
-            List<Scenario> scenarios = InstanceGenerator.GenerateManyScenarios(numberScenarios, "pliki//100 lokacji//" + fileType + ".txt");
-            Stopwatch sw = Stopwatch.StartNew();
             
-            List<ExperimentResult> rawResults = ExperimentRunner.RunExperiments(scenarios, iters, tabu, mutationtypes, fileType, repeats: 1, baseSeed: 42, parallel: false, maxTime: maxTime, useRL: useRL);
-            Console.WriteLine($"\nAll experiments completed in {sw.Elapsed.TotalSeconds} seconds.");
+            // Training mode - train and save model
+            if (trainMode)
+            {
+                Console.WriteLine($"Training RL model for file type: {fileType}, maxTime: {maxTime}s");
+                List<Scenario> scenarios = InstanceGenerator.GenerateManyScenarios(1, "pliki//100 lokacji//" + fileType + ".txt");
+                
+                if (scenarios.Count > 0)
+                {
+                    string modelDir = "models";
+                    if (!Directory.Exists(modelDir))
+                    {
+                        Directory.CreateDirectory(modelDir);
+                    }
+                    
+                    string modelPath = Path.Combine(modelDir, $"rl_model_{fileType}_{DateTime.Now:yyyyMMdd_HHmmss}.json");
+                    var trainedAgent = TabuSearch.TrainAndSaveRLModel(iters[0], tabu[0], scenarios[0].Instance, maxTime, modelPath, seed: 42);
+                    Console.WriteLine($"\nModel training completed and saved to: {modelPath}");
+                    Console.WriteLine("You can now use this model with: dotnet run <fileType> <maxTime> model:" + modelPath);
+                }
+            }
+            else
+            {
+                // Regular experiment mode
+                Console.WriteLine($"Running experiments for file type: {fileType}, maxTime of scenario: {maxTime}s, RL: {useRL}");
+                List<Scenario> scenarios = InstanceGenerator.GenerateManyScenarios(numberScenarios, "pliki//100 lokacji//" + fileType + ".txt");
+                Stopwatch sw = Stopwatch.StartNew();
+                
+                List<ExperimentResult> rawResults = ExperimentRunner.RunExperiments(scenarios, iters, tabu, mutationtypes, fileType, repeats: 1, baseSeed: 42, parallel: false, maxTime: maxTime, useRL: useRL, rlModelPath: rlModelPath);
+                Console.WriteLine($"\nAll experiments completed in {sw.Elapsed.TotalSeconds} seconds.");
+            }
             //Console.WriteLine($"Running parameter tuning for file type: {fileType}");
             //int repeats = 3;
             //int maxTime = 300;

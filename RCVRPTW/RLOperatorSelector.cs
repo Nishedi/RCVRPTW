@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text.Json;
 
 namespace RCVRPTW
 {
@@ -248,5 +250,112 @@ namespace RCVRPTW
             }
             return output;
         }
+        
+        /// <summary>
+        /// Save the trained RL model to a JSON file
+        /// </summary>
+        public void SaveModel(string filePath)
+        {
+            var modelData = new RLModelData
+            {
+                LearningRate = learningRate,
+                DiscountFactor = discountFactor,
+                Epsilon = epsilon,
+                EpsilonDecay = epsilonDecay,
+                EpsilonMin = epsilonMin,
+                QTable = qTable.ToDictionary(
+                    kvp => $"{kvp.Key.Item1},{kvp.Key.Item2}",
+                    kvp => kvp.Value
+                ),
+                OperatorSelectionCount = operatorSelectionCount,
+                OperatorRewardSum = operatorRewardSum
+            };
+            
+            var options = new JsonSerializerOptions
+            {
+                WriteIndented = true
+            };
+            
+            string jsonString = JsonSerializer.Serialize(modelData, options);
+            File.WriteAllText(filePath, jsonString);
+            Console.WriteLine($"RL model saved to: {filePath}");
+        }
+        
+        /// <summary>
+        /// Load a trained RL model from a JSON file
+        /// </summary>
+        public static RLOperatorSelector LoadModel(string filePath, int? seed = null)
+        {
+            if (!File.Exists(filePath))
+            {
+                throw new FileNotFoundException($"Model file not found: {filePath}");
+            }
+            
+            string jsonString = File.ReadAllText(filePath);
+            var modelData = JsonSerializer.Deserialize<RLModelData>(jsonString);
+            
+            if (modelData == null)
+            {
+                throw new InvalidDataException("Failed to deserialize model data");
+            }
+            
+            var agent = new RLOperatorSelector(
+                learningRate: modelData.LearningRate,
+                discountFactor: modelData.DiscountFactor,
+                epsilon: modelData.Epsilon,
+                epsilonDecay: modelData.EpsilonDecay,
+                epsilonMin: modelData.EpsilonMin,
+                seed: seed
+            );
+            
+            // Load Q-table with error handling
+            try
+            {
+                agent.qTable = modelData.QTable.ToDictionary(
+                    kvp => {
+                        var parts = kvp.Key.Split(',');
+                        if (parts.Length != 2)
+                        {
+                            throw new InvalidDataException($"Invalid Q-table key format: {kvp.Key}");
+                        }
+                        if (!int.TryParse(parts[0], out int state) || !int.TryParse(parts[1], out int action))
+                        {
+                            throw new InvalidDataException($"Invalid Q-table key values: {kvp.Key}");
+                        }
+                        return (state, action);
+                    },
+                    kvp => kvp.Value
+                );
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidDataException($"Failed to load Q-table from model file: {ex.Message}", ex);
+            }
+            
+            // Load statistics
+            agent.operatorSelectionCount = modelData.OperatorSelectionCount;
+            agent.operatorRewardSum = modelData.OperatorRewardSum;
+            
+            Console.WriteLine($"RL model loaded from: {filePath}");
+            Console.WriteLine($"Q-table size: {agent.qTable.Count} state-action pairs");
+            Console.WriteLine($"Epsilon: {agent.epsilon:F4}");
+            
+            return agent;
+        }
+    }
+    
+    /// <summary>
+    /// Data structure for serializing/deserializing RL model
+    /// </summary>
+    public class RLModelData
+    {
+        public double LearningRate { get; set; }
+        public double DiscountFactor { get; set; }
+        public double Epsilon { get; set; }
+        public double EpsilonDecay { get; set; }
+        public double EpsilonMin { get; set; }
+        public Dictionary<string, double> QTable { get; set; } = new Dictionary<string, double>();
+        public int[] OperatorSelectionCount { get; set; } = new int[3];
+        public double[] OperatorRewardSum { get; set; } = new double[3];
     }
 }

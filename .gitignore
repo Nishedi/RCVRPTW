@@ -364,3 +364,6 @@ FodyWeavers.xsd
 
 # Experiment results
 results_raw_*.csv
+
+# RL trained models
+models/

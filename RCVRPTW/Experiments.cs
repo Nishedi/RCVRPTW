@@ -46,7 +46,8 @@ namespace RCVRPTW
             bool parallel = true,
             int maxTime = 120,
             string defaultFilePath = "results_raw_",
-            bool useRL = false
+            bool useRL = false,
+            string? rlModelPath = null
             )
         {
             if (File.Exists($"{defaultFilePath}{fileType}.csv"))
@@ -81,7 +82,7 @@ namespace RCVRPTW
                                     
                                     if (useRL)
                                     {
-                                        solution = TabuSearch.runWithRL(iterations, tabuSize, instance, maxTime: maxTime, seed: seed);
+                                        solution = TabuSearch.runWithRL(iterations, tabuSize, instance, maxTime: maxTime, seed: seed, modelPath: rlModelPath);
                                     }
                                     else
                                     {
