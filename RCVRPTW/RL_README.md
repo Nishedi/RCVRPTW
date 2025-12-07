@@ -53,9 +53,49 @@ reward = (previous_objective - current_objective) / |previous_objective| × 100
 
 ## Usage
 
-### Running with RL
+### Training an RL Model
 
-To enable RL-based operator selection, add `RL` as the third argument:
+To train an RL model and save it for later use:
+
+```bash
+dotnet run --project RCVRPTW/RCVRPTW.csproj <file_type> <max_time_seconds> train
+```
+
+**Examples:**
+
+```bash
+# Train a model on C101 dataset for 1 hour (3600 seconds)
+dotnet run --project RCVRPTW/RCVRPTW.csproj C101 3600 train
+
+# Train a model on R101 dataset for 30 minutes
+dotnet run --project RCVRPTW/RCVRPTW.csproj R101 1800 train
+```
+
+The trained model will be saved in the `models/` directory with a timestamp, e.g., `models/rl_model_C101_20231207_143022.json`.
+
+### Running with a Pre-trained Model
+
+To use a previously trained model for optimization:
+
+```bash
+dotnet run --project RCVRPTW/RCVRPTW.csproj <file_type> <max_time_seconds> model:<path_to_model>
+```
+
+**Examples:**
+
+```bash
+# Use a pre-trained model for optimization
+dotnet run --project RCVRPTW/RCVRPTW.csproj C101 600 model:models/rl_model_C101_20231207_143022.json
+
+# Use the same model on a different problem instance
+dotnet run --project RCVRPTW/RCVRPTW.csproj C201 600 model:models/rl_model_C101_20231207_143022.json
+```
+
+When using a pre-trained model, the epsilon value (exploration rate) is loaded from the saved model, typically allowing for more exploitation than exploration since the model is already trained.
+
+### Running with RL (Training Mode - Legacy)
+
+To enable RL-based operator selection without saving the model (trains from scratch each time):
 
 ```bash
 dotnet run --project RCVRPTW/RCVRPTW.csproj <file_type> <max_time_seconds> RL
@@ -64,7 +104,7 @@ dotnet run --project RCVRPTW/RCVRPTW.csproj <file_type> <max_time_seconds> RL
 **Examples:**
 
 ```bash
-# Run with RL for 1 hour (3600 seconds)
+# Run with RL for 1 hour (3600 seconds) - trains from scratch
 dotnet run --project RCVRPTW/RCVRPTW.csproj C101 3600 RL
 
 # Run with RL for 30 minutes
@@ -78,6 +118,14 @@ dotnet run --project RCVRPTW/RCVRPTW.csproj C101 120
 
 ```bash
 cd RCVRPTW/bin/Debug/net8.0/
+
+# Train a model
+./RCVRPTW C101 3600 train
+
+# Use a pre-trained model
+./RCVRPTW C101 600 model:../../models/rl_model_C101_20231207_143022.json
+
+# Run with RL (train from scratch)
 ./RCVRPTW C101 3600 RL
 ```
 
@@ -170,6 +218,42 @@ The experiment runner in `Experiments.cs` supports:
 3. **Automatic tuning**: No need to manually select operators or tune operator probabilities
 4. **Learning transfer**: The Q-table captures knowledge that persists across the search
 
+## Model Persistence
+
+### Model File Format
+
+The trained models are saved as JSON files containing:
+- Learning hyperparameters (learning rate, discount factor, epsilon, etc.)
+- Q-table: State-action pairs and their Q-values
+- Statistics: Operator selection counts and reward sums
+
+**Example model structure:**
+```json
+{
+  "LearningRate": 0.1,
+  "DiscountFactor": 0.9,
+  "Epsilon": 0.152,
+  "EpsilonDecay": 0.9995,
+  "EpsilonMin": 0.1,
+  "QTable": {
+    "0,0": 0.234,
+    "0,1": 0.156,
+    ...
+  },
+  "OperatorSelectionCount": [845, 832, 823],
+  "OperatorRewardSum": [194.8, 233.6, 105.3]
+}
+```
+
+### Transfer Learning
+
+You can train a model on one problem instance (e.g., C101) and use it on similar instances (e.g., C201, C102). The model learns general patterns about which operators work well in different search states, which can transfer across similar problem structures.
+
+**Workflow:**
+1. Train on a representative instance: `dotnet run C101 3600 train`
+2. Use the trained model on multiple similar instances for faster optimization
+3. The model's Q-values guide operator selection based on learned patterns
+
 ## Future Enhancements
 
 Possible improvements:
@@ -180,7 +264,7 @@ Possible improvements:
 2. **Function approximation**: Use neural networks instead of Q-table
 3. **Multi-armed bandit approaches**: UCB, Thompson sampling
 4. **Operator sequencing**: Learn sequences of operators
-5. **Transfer learning**: Save and load Q-tables across problem instances
+5. **Incremental learning**: Continue training an existing model with new experiences
 
 ## References
 
