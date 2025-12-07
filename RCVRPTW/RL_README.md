@@ -56,6 +56,10 @@ reward = (previous_objective - current_objective) / |previous_objective| × 100
 
 ## Usage
 
+**Note:** All commands below assume you're in the repository root directory. The `--project RCVRPTW/RCVRPTW.csproj` flag tells `dotnet run` which project to execute. 
+
+**Alternative:** You can also `cd RCVRPTW` first and then use `dotnet run` without the `--project` flag.
+
 ### Training an RL Model
 
 To train an RL model and save it for later use:
@@ -72,6 +76,10 @@ dotnet run --project RCVRPTW/RCVRPTW.csproj C101 3600 train
 
 # Train a model on R101 dataset for 30 minutes
 dotnet run --project RCVRPTW/RCVRPTW.csproj R101 1800 train
+
+# Alternative: Change directory first
+cd RCVRPTW
+dotnet run C101 3600 train
 ```
 
 The trained model will be saved in the `models/` directory with a timestamp, e.g., `models/rl_model_C101_20231207_143022.json`.
@@ -119,16 +127,18 @@ dotnet run --project RCVRPTW/RCVRPTW.csproj C101 120
 
 ### Running from Compiled Binary
 
+If you prefer to build once and run the compiled executable directly (without `dotnet run`):
+
 ```bash
+# Build the project first
+dotnet build RCVRPTW/RCVRPTW.csproj
+
+# Navigate to the output directory
 cd RCVRPTW/bin/Debug/net8.0/
 
-# Train a model
+# Now you can run directly without 'dotnet run' or '--project'
 ./RCVRPTW C101 3600 train
-
-# Use a pre-trained model
 ./RCVRPTW C101 600 model:../../models/rl_model_C101_20231207_143022.json
-
-# Run with RL (train from scratch)
 ./RCVRPTW C101 3600 RL
 ```
 
