@@ -14,6 +14,8 @@ Experimental analysis, conducted on 3,000 stochastic scenarios derived from the 
     \item \textbf{Cost Component Trade-offs (H3):} While Tabu Search incurred slightly higher time-window penalties (1598.55 vs. 1414.67), it achieved substantial reductions in travel costs (1826.93 vs. 2722.83) and vehicle operation time (5670.95 vs. 6693.24). This demonstrates that intelligent exploration of the solution space can strategically accept limited constraint relaxation to achieve globally superior solutions.
     
     \item \textbf{Reduced Loss Tail (H4):} The metaheuristic significantly mitigated worst-case scenarios, lowering the 90th percentile from 20717.53 to 17797.22, the 95th percentile from 21078.65 to 18037.84, and the maximum cost from 22092.06 to 18750.35. This property is crucial for operational reliability in real-world logistics where predictable worst-case behavior is as important as average performance.
+    
+    \item \textbf{Adaptive Operator Selection:} Reinforcement learning-based dynamic operator selection consistently outperformed all fixed neighborhood operator strategies. For the C101 instance, the RL approach achieved 4.74\% to 15.98\% improvements over fixed operators (swap, insert, invert), while for C201, improvements ranged from 7.98\% to 16.17\%. This demonstrates that adaptive operator selection significantly enhances search effectiveness by exploiting the complementary strengths of different neighborhood structures.
 \end{itemize}
 
 \subsection{Contributions}
@@ -24,6 +26,7 @@ The main contributions of this work include:
     \item A comprehensive experimental framework for evaluating routing algorithms under stochastic demand and time window perturbations, addressing realistic uncertainty in logistics operations.
     \item Empirical validation demonstrating that metaheuristic approaches (specifically Tabu Search) provide not only better average performance but also superior robustness and risk mitigation compared to constructive greedy methods.
     \item Analysis of cost component trade-offs showing how intelligent search can strategically balance competing objectives (route length, service time, and time window compliance).
+    \item Development and validation of a reinforcement learning-based adaptive operator selection mechanism that dynamically chooses neighborhood operators based on search state, achieving superior performance compared to traditional fixed-operator approaches.
 \end{enumerate}
 
 \subsection{Practical Implications}
@@ -51,7 +54,7 @@ While this study provides valuable insights, several directions warrant further 
     
     \item \textbf{Sustainability Considerations:} Integration of environmental objectives such as CO$_2$ emissions minimization alongside operational cost reduction.
     
-    \item \textbf{Machine Learning Integration:} Use of predictive models to anticipate demand patterns and time window violations, enabling proactive route planning.
+    \item \textbf{Machine Learning Integration:} Use of predictive models to anticipate demand patterns and time window violations, enabling proactive route planning. Further refinement of the reinforcement learning operator selection mechanism could explore deeper neural network architectures or more sophisticated state representations.
 \end{itemize}
 
 In conclusion, this work demonstrates that metaheuristic optimization approaches, particularly Tabu Search, offer substantial benefits for solving real-world vehicle routing problems under uncertainty. The combination of mathematical rigor in problem formulation, comprehensive experimental design, and practical implementation provides a solid foundation for both academic research and industrial application in logistics optimization.
