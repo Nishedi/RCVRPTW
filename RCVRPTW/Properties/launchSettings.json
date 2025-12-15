@@ -2,7 +2,7 @@
   "profiles": {
     "RCVRPTW": {
       "commandName": "Project",
-      "commandLineArgs": " \"C101\" 30 model:models\\rl_model_C101_20251207_210827.json both"
+      "commandLineArgs": "C101 500 rl both2\r\n"
     }
   }
 }

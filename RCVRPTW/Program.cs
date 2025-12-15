@@ -8,15 +8,14 @@ using System.IO;
 
 public static class Program
 {
-
     static int[] iters = new[] { /*100, 500, 2000*/200 };
     static int[] tabu = new[] { 50 };
-    static int numberScenarios = 1;
+    static int numberScenarios = 10;
     static string[] fileNames = new[] { "pliki//100 lokacji//C101.txt",
         "pliki//100 lokacji//C201.txt", "pliki//100 lokacji//R101.txt", "pliki//100 lokacji//R201.txt",
         "pliki//100 lokacji//RC101.txt", "pliki//100 lokacji//RC201.txt"
     };
-    static string[] mutationtypes = new[] { "swap"/*, "invert", "insert"*/ };
+    static string[] mutationtypes = new[] { "swap", "invert", "insert", "2opt", "oropt", "rand" };
     static void Main(string[] args)
     {
         if (args.Length > 0)
@@ -26,6 +25,8 @@ public static class Program
             string? rlModelPath = null;
             bool trainMode = false;
             bool both = false;
+            bool both2 = false;
+            string[] results = { };
 
             if (args.Length > 1)
             {
@@ -66,6 +67,12 @@ public static class Program
                     useRL = true;
                     Console.WriteLine("Both mode enabled - experiments will be run with and without RL for comparison");
                 }
+                if (args[3].ToLower() == "both2")
+                {
+                    both2 = true;
+                    Console.WriteLine("Both mode enabled - experiments will be run with and without RL for comparison");
+                }
+
             }
 
             string fileType = args[0];
@@ -104,6 +111,39 @@ public static class Program
                 List<ExperimentResult> rawResultsRL = ExperimentRunner.RunExperiments(scenarios, iters, tabu, mutationtypes, fileType, repeats: 1, baseSeed: 42, parallel: false, maxTime: maxTime, useRL: true, rlModelPath: rlModelPath);
                 
                 Console.WriteLine($"\nAll experiments completed in {sw.Elapsed.TotalSeconds} seconds.");
+            }
+            else if (both2)
+            {
+                Console.WriteLine($"Running experiments for file type: {fileType}, maxTime of scenario: {maxTime}s, both RL and non-RL");
+                List<Scenario> scenarios = InstanceGenerator.GenerateManyScenarios(numberScenarios, "pliki//100 lokacji//" + fileType + ".txt");
+                Stopwatch sw = Stopwatch.StartNew();
+
+                Console.WriteLine("Running experiments WITHOUT RL:");
+                List<ExperimentResult> rawResultsNonRL = ExperimentRunner.RunExperiments(scenarios, iters, tabu, mutationtypes, fileType, repeats: 1, baseSeed: 42, parallel: false, maxTime: maxTime, useRL: false, defaultFilePath: $"results_raw_no_RL_{fileType}_");
+
+                mutationtypes = new[] { "rl_operator" };
+                Console.WriteLine("\nRunning experiments WITH RL:");
+                List<ExperimentResult> rawResults = ExperimentRunner.RunExperiments(scenarios, iters, tabu, mutationtypes, fileType, repeats: 1, baseSeed: 42, parallel: false, maxTime: maxTime, useRL: useRL, rlModelPath: rlModelPath, defaultFilePath: $"results_raw_RL_{fileType}_");
+                Console.WriteLine("\nRunning experiments WITH RL epochs:");
+                //List<ExperimentResult> rawResultsv2 = ExperimentRunner.RunExperiments(scenarios, iters, tabu, mutationtypes, fileType, repeats: 1, baseSeed: 42, parallel: false, maxTime: maxTime, useRL: useRL, rlModelPath: rlModelPath, epochs: true);
+                //Console.WriteLine($"\nAll experiments completed in {sw.Elapsed.TotalSeconds} seconds.");
+
+                //Console.WriteLine("Results for non RL operator");
+                //foreach (var res in rawResultsNonRL)
+                //{
+                //    Console.WriteLine($"{rawResultsNonRL.IndexOf(res)}: GREEDY={res.GreedyObjective} Tabu={res.Objective} MutationType={res.MutationType}");
+                //}
+
+
+                //foreach (var res in rawResults)
+                //{
+                //    Console.WriteLine($"{rawResults.IndexOf(res)}: GREEDY={res.GreedyObjective} Tabu={res.Objective} MutationType=RL");
+                //}
+                //foreach (var res in rawResultsv2)
+                //{
+                //    Console.WriteLine($"{rawResultsv2.IndexOf(res)}: GREEDY={res.GreedyObjective} Tabu={res.Objective} MutationType=RL epochs");
+                //}
+
             }
             else
             {
@@ -183,7 +223,7 @@ namespace RCVRPTW
         {
             var preparedInstance = new Instance(filename, 100, true, true,
                 waitingFactor: 1.0, distanceFactor: 1.0, penaltyFactor: 2.0,
-                toEarlyPenaltyFactor: 1.0, toLatePenaltyFactor: 2.0
+                toEarlyPenaltyFactor: 1.0, toLatePenaltyFactor: 2.0, rng
                 );
 
             return new Scenario(scenarioId, preparedInstance);
@@ -191,7 +231,7 @@ namespace RCVRPTW
 
         public static List<Scenario> GenerateManyScenarios(int numScenariosPerFile, string filename)
         {
-            var rng = new Random();
+            var rng = new Random(1);
             var scenarios = new List<Scenario>();
             for (int i = 0; i < numScenariosPerFile; i++)
                 scenarios.Add(GenerateInstance(i, rng, filename));

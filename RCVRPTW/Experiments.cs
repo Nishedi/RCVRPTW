@@ -47,7 +47,8 @@ namespace RCVRPTW
             int maxTime = 120,
             string defaultFilePath = "results_raw_",
             bool useRL = false,
-            string? rlModelPath = null
+            string? rlModelPath = null,
+            bool epochs = false
             )
         {
             if (File.Exists($"{defaultFilePath}{fileType}.csv"))
@@ -80,9 +81,13 @@ namespace RCVRPTW
                                     var instance = scen.Instance;
                                     Solution solution;
                                     
-                                    if (useRL)
+                                    if (useRL&&!epochs)
                                     {
                                         solution = TabuSearch.runWithRL(iterations, tabuSize, instance, maxTime: maxTime, seed: seed, modelPath: rlModelPath);
+                                    }
+                                    else if (useRL && epochs)
+                                    {
+                                        solution = TabuSearch.runWithRL_epoc(iterations, tabuSize, instance, maxTime: maxTime, seed: seed, modelPath: rlModelPath);
                                     }
                                     else
                                     {

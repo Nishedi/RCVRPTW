@@ -29,10 +29,10 @@ namespace RCVRPTW
         public double PenaltyFactor = 1.0;
         public Instance(string filename, int vehicleNumbers=100, bool randomDemands = false, bool randomTimeWindow = false, 
             double waitingFactor=1.0, double distanceFactor=1.0, double penaltyFactor=1.0,
-            double toEarlyPenaltyFactor=1.0, double toLatePenaltyFactor = 1.0)
+            double toEarlyPenaltyFactor=1.0, double toLatePenaltyFactor = 1.0, Random rng=null)
         {
             FileName = filename;
-            ParseSolomonFile(filename, randomDemands, randomTimeWindow);
+            ParseSolomonFile(filename, randomDemands, randomTimeWindow,rng);
             for(int i = 0; i < vehicleNumbers; i++)
             {
                 Vehicles.Add(new Vehicle(0, 90.0));
@@ -45,7 +45,7 @@ namespace RCVRPTW
         }
 
 
-        public void ParseSolomonFile(string filePath, bool randomDemands, bool randomTimeWindow)//typowy plik solomona
+        public void ParseSolomonFile(string filePath, bool randomDemands, bool randomTimeWindow, Random rng)//typowy plik solomona
         {
             string[] lines = File.ReadAllLines(filePath);
             foreach (var line in lines)
@@ -67,7 +67,7 @@ namespace RCVRPTW
                         (double.Parse(parts[4], CultureInfo.InvariantCulture) * 0.1, double.Parse(parts[5], CultureInfo.InvariantCulture) * 0.1),
                         (int)double.Parse(parts[6], CultureInfo.InvariantCulture),
 
-                        1,randomDemands,randomTimeWindow
+                        1,randomDemands,randomTimeWindow,rng:rng
                     ));
 
                 }

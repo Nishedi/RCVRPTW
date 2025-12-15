@@ -19,7 +19,7 @@ public class Location
 
     public Location(
         int id, LocationType type, int x, int y, double demand, double demandStdDev,
-        (int Start, int End) timeWindow, (double Start, double End) timeWindowStdDev, int serviceTime, int priority, bool randomDemand = false, bool randomTimeWindow = false)
+        (int Start, int End) timeWindow, (double Start, double End) timeWindowStdDev, int serviceTime, int priority, bool randomDemand = false, bool randomTimeWindow = false, Random rng = null)
     {
         Id = id;
         Type = type;
@@ -34,16 +34,16 @@ public class Location
         Priority = priority;
         if(randomDemand && type == LocationType.Customer)
         {
-            Demand = DemandSampler.SampleNormalMathNet(demand, demandStdDev);
+            Demand = DemandSampler.SampleNormalMathNet(demand, demandStdDev, rng: rng);
         }
         if(randomTimeWindow && type == LocationType.Customer)
         {
-            var start = DemandSampler.SampleDemandInt(TimeWindow.Start, timeWindowStdDev.Start);
-            var end = DemandSampler.SampleDemandInt(timeWindow.End, timeWindowStdDev.End);
+            var start = DemandSampler.SampleDemandInt(TimeWindow.Start, timeWindowStdDev.Start, rng: rng);
+            var end = DemandSampler.SampleDemandInt(timeWindow.End, timeWindowStdDev.End, rng: rng);
             while (end <= start)
             {
-                end = DemandSampler.SampleDemandInt(TimeWindow.Start, timeWindowStdDev.Start);
-                end = DemandSampler.SampleDemandInt(timeWindow.End, timeWindowStdDev.End);
+                end = DemandSampler.SampleDemandInt(TimeWindow.Start, timeWindowStdDev.Start,rng: rng);
+                end = DemandSampler.SampleDemandInt(timeWindow.End, timeWindowStdDev.End,rng: rng);
             }
             TimeWindow = (start, end);
 
