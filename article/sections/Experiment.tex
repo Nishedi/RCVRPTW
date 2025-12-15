@@ -122,6 +122,69 @@ The fourth experiment examines Hypothesis~H4, which states that Tabu Search redu
 
 Table~\ref{tab:expA_summary} already indicates substantial differences in the upper percentiles of the cost distribution. Compared to Greedy, Tabu Search significantly lowers both the 90th percentile ($20717.53$ vs. $17797.22$) and the 95th percentile ($21078.65$ vs. $18037.84$). This reduction demonstrates that Tabu Search generates fewer scenarios with excessively high costs, tightening the tail of the distribution. The improvement persists even in the extreme worst-case values: the maximum observed cost for Greedy reaches $22092.06$, whereas the maximum for Tabu is substantially lower at $18750.35$. 
 
-These differences are further reinforced by the empirical distribution of results across representative instance families. The ECDF curves onsistently show that Tabu Search reaches full cumulative coverage faster (Tabu curves are steeper) and earlier than Greedy, indicating a shorter and lighter tail. Whereas Greedy exhibits a long stretch of high-cost extremes, Tabu Search rapidly converges to the upper bound of the distribution, confirming that it limits worst-case degradation.
+These differences are further reinforced by the empirical distribution of results across representative instance families. The ECDF curves consistently show that Tabu Search reaches full cumulative coverage faster (Tabu curves are steeper) and earlier than Greedy, indicating a shorter and lighter tail. Whereas Greedy exhibits a long stretch of high-cost extremes, Tabu Search rapidly converges to the upper bound of the distribution, confirming that it limits worst-case degradation.
 
 Overall, the results strongly support Hypothesis~H4. Tabu Search not only improves average performance but also reduces the risk of unfavourable outcomes by mitigating extreme-cost scenarios. This property is essential for robust transportation planning, where ensuring predictable worst-case behaviour is as important as minimising expected routing cost.
+
+\subsection{Experiment E: Neighborhood Operator Selection Strategies}
+
+The final experiment compares different strategies for selecting neighborhood operators during the Tabu Search process. While the previous experiments focused on comparing Tabu Search against a greedy baseline, this experiment investigates how the choice of neighborhood operator affects the quality of solutions obtained by Tabu Search itself.
+
+In traditional Tabu Search implementations, a single fixed neighborhood operator is used throughout the search process. The most common operators are:
+\begin{itemize}
+    \item \textbf{Swap}: Exchanges the positions of two customers in a route
+    \item \textbf{Insert}: Removes a customer and reinserts it at a different position
+    \item \textbf{Invert}: Reverses a sequence of customers in a route
+\end{itemize}
+
+However, different operators may be more effective at different stages of the search or in different regions of the solution space. To address this limitation, a reinforcement learning (RL) based approach was developed that dynamically selects the most appropriate operator based on the current search state. The RL agent learns from experience which operators tend to produce improvements in different situations, adapting its selection strategy over time.
+
+To evaluate the effectiveness of this adaptive approach, experiments were conducted on two representative Solomon instances: C101 (clustered customers, short time windows) and C201 (clustered customers, long time windows). For each instance, 500 stochastic scenarios were generated, and solutions were obtained using both fixed operator strategies and the RL-based dynamic selection approach.
+
+Tables~\ref{tab:operator_comparison_c101} and~\ref{tab:operator_comparison_c201} present the comparative results for instances C101 and C201, respectively. The tables show descriptive statistics of the objective values obtained by each strategy across all scenarios.
+
+\begin{table}[ht]
+\renewcommand{\arraystretch}{1.3}
+\centering
+\caption{Comparison of neighborhood operator selection strategies for C101 instance.}
+\label{tab:operator_comparison_c101}
+\begin{tabular}{l|c|c|c|c}
+\hline\hline
+Operator & Mean & Std & Min & Max \\
+\hline
+Swap       & 25529.72 &  247.55 & 24944.92 & 25969.94 \\
+Insert     & 27184.69 &  217.28 & 26976.24 & 27506.67 \\
+Invert     & 28944.53 &  153.07 & 28314.92 & 29236.06 \\
+RL         & 24318.59 &  515.33 & 23201.89 & 24906.23 \\
+\hline\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\renewcommand{\arraystretch}{1.3}
+\centering
+\caption{Comparison of neighborhood operator selection strategies for C201 instance.}
+\label{tab:operator_comparison_c201}
+\begin{tabular}{l|c|c|c|c}
+\hline\hline
+Operator & Mean & Std & Min & Max \\
+\hline
+Swap       & 20577.43 &  580.51 & 19513.73 & 21797.15 \\
+Insert     & 22296.16 &  111.29 & 22240.83 & 22517.50 \\
+Invert     & 22587.36 &  178.93 & 22131.99 & 22718.71 \\
+RL         & 18935.98 &  657.41 & 17754.60 & 19693.29 \\
+\hline\hline
+\end{tabular}
+\end{table}
+
+The results demonstrate that the RL-based operator selection strategy consistently outperforms all fixed operator approaches. For the C101 instance, the RL approach achieves a mean objective value of 24318.59, which represents improvements of 4.74\%, 10.54\%, and 15.98\% compared to the swap, insert, and invert operators, respectively. Similarly, for the C201 instance, the RL approach obtains a mean of 18935.98, showing improvements of 7.98\%, 15.07\%, and 16.17\% over the three fixed operators.
+
+Among the fixed operators, the swap operator consistently performs best, followed by insert, with invert showing the weakest performance. This suggests that simple customer exchanges are generally more effective than sequence inversions for these clustered instance types. However, the RL approach surpasses even the best fixed operator by a significant margin.
+
+It is noteworthy that the RL approach exhibits higher standard deviation than most fixed operators (515.33 for C101 and 657.41 for C201), indicating greater variability in solution quality across scenarios. This can be attributed to the exploration-exploitation trade-off inherent in reinforcement learning: the agent must occasionally try suboptimal operators to learn about their effectiveness, which can temporarily reduce solution quality. Despite this increased variability, the RL approach still achieves substantially better mean performance and competitive minimum values.
+
+The superior performance of the RL-based approach can be explained by its ability to adapt operator selection to the characteristics of the current solution and search state. Rather than relying on a single operator throughout the entire search, the RL agent learns to identify when each operator is most likely to be beneficial. For example, swap operations might be preferred for fine-tuning nearly optimal solutions, while insert operations could be more effective for escaping local optima. By dynamically selecting operators based on learned patterns, the RL approach exploits the complementary strengths of different neighborhood structures.
+
+These findings have important practical implications. In real-world logistics applications, where solution quality directly impacts operational costs and service reliability, the additional computational overhead of RL-based operator selection is justified by the substantial improvements in solution quality. The 5-16\% improvements observed in these experiments could translate to significant cost savings when applied to large-scale vehicle routing problems.
+
+In summary, Experiment~E demonstrates that adaptive neighborhood operator selection through reinforcement learning provides substantial benefits over traditional fixed-operator approaches. The RL-based strategy consistently achieves the best average performance across different instance types, validating the hypothesis that dynamic operator selection can enhance the effectiveness of metaheuristic search algorithms for vehicle routing problems under uncertainty.

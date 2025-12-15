@@ -1,0 +1,13 @@
+%Parameter Tuning
+\subsection{Parameter Tuning}
+
+Before conducting the main experiments, a parameter tuning phase was performed to identify appropriate values for the Tabu Search algorithm. The key parameters considered were:
+\begin{itemize}
+    \item \textbf{Iterations}: The maximum number of search iterations (tested values: 50, 100, 150, 200, 250, 300)
+    \item \textbf{Tabu Size}: The length of the tabu list (tested values: 10, 20, 30, 40, 50)
+    \item \textbf{Mutation Operator}: The neighborhood operator used (tested values: swap, insert, invert)
+\end{itemize}
+
+Parameter tuning experiments were conducted on all six Solomon benchmark instances (C101, C201, R101, R201, RC101, RC201), with multiple repetitions for each parameter combination. Based on the results, the configuration \texttt{iterations = 200}, \texttt{tabuSize = 40}, and \texttt{mutationType = swap} was selected for the main experiments, as this combination consistently produced high-quality solutions with reasonable computational time across all instance types.
+
+The detailed parameter tuning results are available in the supplementary data files, showing the performance of different parameter combinations across various stochastic scenarios.
