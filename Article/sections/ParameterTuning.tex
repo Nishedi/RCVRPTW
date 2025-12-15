@@ -9,16 +9,16 @@ The parameter tuning experiments were conducted on six representative Solomon be
 
 The following parameters were varied:
 \begin{itemize}
-    \item \textbf{Neighborhood Type}: swap, insert, invert.
+    \item \textbf{Neighborhood operator}: swap, insert, invert.
     \item \textbf{Tabu List Size}: 10, 20, 30, 40, 50.
     \item \textbf{Number of Iterations}: 50, 100, 150, 200, 250, 300 -- representing the number of consecutive iterations without improvement after which the current solution is discarded and replaced with a new random solution.
 \end{itemize}
 
 This resulted in $3 \times 5 \times 6 = 90$ unique parameter configurations, each tested on all six instances with three repetitions, yielding a total of 1620 experimental runs.
 
-\subsubsection{Results by Mutation Type}
+\subsubsection{Results by Neighborhood operator}
 
-Figure~\ref{fig:mutation_comparison} presents the comparison of mean objective values achieved by different mutation operators. The \texttt{swap} operator consistently outperforms both \texttt{insert} and \texttt{invert} operators across all tested configurations.
+Figure~\ref{fig:mutation_comparison} presents the comparison of mean objective values achieved by different neighborhood operators. The \texttt{swap} operator consistently outperforms both \texttt{insert} and \texttt{invert} operators across all tested configurations.
 
 \begin{figure}[ht]
     \centering
@@ -46,20 +46,20 @@ Figure~\ref{fig:mutation_comparison} presents the comparison of mean objective v
         };
         \end{axis}
     \end{tikzpicture}
-    \caption{Comparison of mean objective values by mutation type. Lower values indicate better performance. The \texttt{swap} operator achieves the lowest average objective value.}
+    \caption{Comparison of mean objective values by neighborhood operator. Lower values indicate better performance. The \texttt{swap} method achieves the lowest average objective value.}
     \label{fig:mutation_comparison}
 \end{figure}
 
-Table~\ref{tab:mutation_summary} provides statistics for each mutation type. The \texttt{swap} operator not only achieves the lowest mean objective (11449.25) but also demonstrates the smallest variation, indicating more consistent performance.
+Table~\ref{tab:mutation_summary} provides statistics for each neighborhood operator. The \texttt{swap} operator not only achieves the lowest mean objective (11449.25) but also demonstrates the smallest variation, indicating more consistent performance.
 
 \begin{table}[ht]
     \renewcommand{\arraystretch}{1.3}
-    \caption{Summary statistics of objective values by mutation type.}
+    \caption{Summary statistics of objective values by neighborhood operator.}
     \label{tab:mutation_summary}
     \centering
     \begin{tabular}{l|c|c|c|c}
         \hline\hline
-        Mutation & Mean & Min & Max & Improvement \\
+        Nbh & Mean & Min & Max & Improvement \\
         \hline\hline
         swap   & 11449.25 & 4981.76 & 25969.94 & 16.98\% \\ \hline
         insert & 12183.67 & 5415.28 & 27506.67 & 11.66\% \\ \hline
@@ -107,7 +107,7 @@ Figure~\ref{fig:tabu_size_impact} shows the relationship between tabu list size 
 
 \subsubsection{Impact of Number of Iterations}
 
-Figure~\ref{fig:iterations_impact} illustrates the effect of the \textit{no-improvement iteration limit}, i.e., the number of consecutive iterations without improvement after which a new random solution is generated. Increasing this limit from 50 to 100--200 improves solution quality by allowing the algorithm to explore the current region of the search space more thoroughly. Beyond 200 iterations, improvements diminish, as excessively long stagnation periods delay potentially beneficial diversification.
+Figure~\ref{fig:iterations_impact} illustrates the effect of the \textit{no-improvement iteration limit}, i.e., the number of consecutive iterations without improvement after which a~new random solution is generated. Increasing this limit from 50 to 100--200 improves solution quality by allowing the algorithm to explore the current region of the search space more thoroughly. Beyond 200 iterations, improvements diminish, as excessively long stagnation periods delay potentially beneficial diversification.
 
 \begin{figure}[ht]
     \centering
@@ -144,16 +144,16 @@ Figure~\ref{fig:iterations_impact} illustrates the effect of the \textit{no-impr
 
 \subsubsection{Best Configuration}
 
-Table~\ref{tab:best_configs} summarizes the best parameter configurations identified for each mutation type. The overall best configuration uses the \texttt{swap} operator with tabu size of 50 and a no-improvement limit of 100 iterations, achieving a mean objective value of 11263.33.
+Table~\ref{tab:best_configs} summarizes the best parameter configurations identified for each neighborhood operator. The overall best configuration uses the \texttt{swap} operator with tabu size of 50 and a no-improvement limit of 100 iterations, achieving a mean objective value of 11263.33.
 
 \begin{table}[ht]
     \renewcommand{\arraystretch}{1.3}
-    \caption{Best parameter configurations for each mutation type.}
+    \caption{Best parameter configurations for each neighborhood operator.}
     \label{tab:best_configs}
     \centering
     \begin{tabular}{l|c|c|c}
         \hline\hline
-        Mutation & Tabu Size & No-Improvement Limit & Mean Objective \\
+        Nbh & Tabu Size & No-Improvement Limit & Mean Objective \\
         \hline\hline
         swap   & 50 & 100 & \textbf{11263.33} \\ \hline
         insert & 40 & 150 & 12138.55 \\ \hline
@@ -167,7 +167,7 @@ Table~\ref{tab:best_configs} summarizes the best parameter configurations identi
 The parameter tuning experiments lead to the following conclusions:
 
 \begin{enumerate}
-    \item \textbf{Mutation operator}: The \texttt{swap} operator significantly outperforms \texttt{insert} and \texttt{invert}, providing 6--10\% lower objective values on average.
+    \item \textbf{neighborhood operator}: The \texttt{swap} move significantly outperforms \texttt{insert} and \texttt{invert}, providing 6--10\% lower objective values on average.
 
     \item \textbf{Tabu list size}: Larger tabu sizes (40--50) yield slightly better performance by reducing premature cycling, although differences remain small.
 

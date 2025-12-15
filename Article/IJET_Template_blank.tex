@@ -356,6 +356,7 @@
 \usepackage{textgreek}
 \usepackage{tikz}
 \usepackage{pgfplots}
+\pgfplotsset{compat=1.18} 
 \hyphenation{op-tical net-works semi-conduc-tor}
 %\hyphenpenalty=500
 \usepackage{balance}
@@ -541,14 +542,17 @@ pdfcreator={pdfLaTeX}
 % ABSTRACT
  
 \begin{abstract}
-Modern logistics systems operate under uncertain and dynamically changing conditions, particularly in relation to customer demand and delivery time windows. This paper investigates a stohastic variant of the Capacitated Vehicle Routing Problem with Time Windows (CVRPTW), in which both demand and time-window boundaries are subject to stochastic fluctuations. Although the approach is not formulated within the framework of robust optimization (which typically involves min–max formulations or uncertainty sets), solution robustness is evaluated through scenario-based analysis. A complete Mixed Integer Linear Programming (MILP) formulation is proposed, integrating vehicle capacities, service times, soft time windows, and penalty-based feasibility relaxation. To solve large stochastic instances, a metaheuristic based on Tabu Search is developed and compared with a constructive greedy baseline. The experimental framework evaluates 3,000 scenarios generated from perturbed Solomon instances, enabling a comprehensive analysis of expected performance, robustness, and tail risk. Results demonstrate that Tabu Search significantly outperforms the greedy method, reducing average cost by approximately 16\%, lowering variability across scenarios, and mitigating extreme-cost outcomes. Although Tabu Search produces slightly higher time-window penalties, the reductions in travel distance and operational time lead to superior overall performance, confirming its suitability for robust route planning under uncertainty.
+Modern logistics systems operate under uncertain and dynamically changing conditions, particularly in relation to customer demand and delivery time windows. This paper investigates a stochastic variant of the Capacitated Vehicle Routing Problem with Time Windows (CVRPTW), where both time-window boundaries and customer demands are perturbed across multiple scenarios. Although the approach does not follow a formal robust optimization framework, solution robustness is evaluated through large-scale scenario-based analysis. A complete MILP model integrating vehicle capacity constraints, soft time windows and penalty-based feasibility relaxation is formulated. To solve large stochastic instances, a Tabu Search metaheuristic is developed and compared with a greedy constructive baseline.
+
+The experimental evaluation over 3,000 stochastic scenarios derived from Solomon benchmarks demonstrates that Tabu Search consistently outperforms Greedy — achieving lower average cost, reduced variability, smaller time-window penalties, and fewer extreme high-cost outcomes. These results confirm that the metaheuristic provides robust routing performance under uncertainty, making it well-suited for real-world applications.
+
 \end{abstract}
 
 
 % KEYWORDS 
 
 \begin{IEEEkeywords}
-robustness, stochastic, time windows, MILP
+CVRPTW, robustness, stochastic, time windows, MILP, Tabu Search
 \end{IEEEkeywords}
 
 \IEEEpeerreviewmaketitle

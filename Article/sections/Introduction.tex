@@ -21,11 +21,11 @@
 
 
 \section{Introduction}\label{sec:introduction}
-\IEEEPARstart{I}{n} an era of rapidly changing supply chains, demand is growing for flexible transportation services that serve store networks, pickup points, construction sites, and temporary events. Transport companies perform daily deliveries of materials and components whose sizes may vary from day to day. Customers typically specify acceptable delivery and unloading time windows (e.g., for safety or operational reasons), so each visit must not only occur at a scheduled time but also complete unloading within a designated time window.
+In an era of rapidly changing supply chains, demand is growing for flexible transportation services that serve store networks, pickup points, construction sites, and temporary events. Transport companies deliver daily materials and components whose sizes may vary from day to day. Customers typically specify acceptable delivery and unloading time windows (e.g. for safety or operational reasons), so each visit must not only occur at a scheduled time but also complete unloading within a designated time window.
 
-Time windows need not be static — they can be modified due to delays, demand fluctuations, or customer requests. In such conditions, planning methods capable of maintaining solution quality under changing input data are particularly important. Although the approach presented in this work does not constitute a formal robust optimization method in the theoretical sense, it demonstrates characteristics of \emph{operational robustness}. The use of multiple stochastic scenario analyzes additionally allows for the assessment of how algorithm behavior changes depending on perturbations, thereby enabling a more comprehensive evaluation of its stability. The algorithm's ability to intelligently explore the solution space means it adapts better to disruptions than constructive approaches, which enables reduction of operational costs and decreased risk of time window violations under uncertainty.
+Time windows do not need to be static -- they can be modified due to delays, demand fluctuations, or customer requests. In such conditions, planning methods capable of maintaining solution quality under changing input data are particularly important. Although the approach presented in this work does not constitute a formal robust optimization method in the theoretical sense, it demonstrates characteristics of \emph{operational robustness}. The use of multiple stochastic scenario analyzes, additionally allows for the assessment of how algorithm behavior changes depending on perturbations, thereby enabling a more comprehensive evaluation of its stability. The algorithm's ability to intelligently explore the solution space means it adapts better to disruptions than constructive approaches, which enables reduction of operational costs and decreased risk of time window violations under uncertainty.
 
-Taking into account the fleet's limited capacity and service times, route planning and load allocation become a combinatorial problem burdened with many realistic operational constraints: vehicle capacities (capacitated), time windows of availability, and variable demand at delivery points. In this paper, a mathematical model reflecting the described conditions is proposed, and two solution methods are compared: a greedy approach and a tailored metaheuristic adapted to large instances. An additional value of this work is the ability to observe to what extent these methods differ in terms of robustness to uncertainty and how they behave under extreme conditions. The experiments were conducted on benchmark data extended with stochastic modifications of customer time windows and demands.
+Taking into account the fleet's limited capacity, operational time, route planning and load allocation become a combinatorial problem burdened with many realistic operational constraints: vehicle capacities (capacitated), time windows of availability, and variable demand at delivery points. In this paper, a mathematical model reflecting the described conditions is proposed, and two solution methods are compared: a greedy approach and a tailored metaheuristic adapted to large instances. An additional value of this work is the ability to observe to what extent these methods differ in terms of robustness to uncertainty and how they behave under extreme conditions. The experiments were conducted on benchmark data extended with stochastic modifications of customer time windows and demands.
 
 
 \begin{figure}[htbp]
@@ -36,11 +36,12 @@ Taking into account the fleet's limited capacity and service times, route planni
 \end{figure}
 
 \subsection{Research hypotheses}
-To evaluate the effectiveness and stability under uncertainty robustness of the proposed approaches, the following research hypotheses were formulated:
+To evaluate the effectiveness and stability under uncertainty robustness of the proposed approaches, the following research hypotheses (H1 - H4) were formulated:
 
 \begin{itemize}
     \item[\textbf{H1.}] The metaheuristic (Tabu Search) provides a lower expected total cost than the greedy algorithm across a broad set of stochastic scenarios.
-     \item[\textbf{H2.}] The Tabu Search exhibits smaller variability of results across scenarios, which indicates higher stability and operational robustness with respect to changing input data.
+    
+     \item[\textbf{H2.}] The Tabu Search exhibits smaller variability of results across scenarios, which indicates higher stability and operational robustness with changing input data.
     
     \item[\textbf{H3.}] The Tabu Search minimizes the total penalty associated with time-window violations compared to the greedy approach. While in most configurations avoiding penalties may be impossible, the goal is to reduce their magnitude.
     
@@ -48,59 +49,12 @@ To evaluate the effectiveness and stability under uncertainty robustness of the 
     
 \end{itemize}
 
-The above hypotheses address not only average solution quality but also their stability and reliability under uncertainty. This allows the analysis to move beyond nominal optimization results and assess algorithm behavior in the presence of stochastic disturbances — a crucial factor in practical logistics applications.
+The above hypotheses address not only average solution quality, but also their stability and reliability under uncertainty. This allows the analysis to move beyond nominal optimization results and assess algorithm behavior in the presence of stochastic disturbances -- a crucial factor in practical logistics applications.
 
-% \textbf{Tutaj trzeba jeszcze trochę dopisać o motywacji }
-
-% FIGURE 
-% An example of a floating figure using the graphicx package.
-% Note that \label must occur AFTER (or within) \caption.
-% For figures, \caption should occur after the \includegraphics.
-% Note that IEEEtran v1.7 and later has special internal code that
-% is designed to preserve the operation of \label within \caption
-% even when the captionsoff option is in effect. However, because
-% of issues like this, it may be the safest practice to put all your
-% \label just after \caption rather than within \caption{}.
 %
-% Reminder: the "draftcls" or "draftclsnofoot", not "draft", class
-% option should be used if it is desired that the figures are to be
-% displayed while in draft mode.
-%
-%\begin{figure}[!t]
-%\centering
-%\includegraphics[width=2.5in]{myfigure}
-% where an .eps filename suffix will be assumed under latex,
-% and a .pdf suffix will be assumed for pdflatex; or what has been declared
-% via \DeclareGraphicsExtensions.
-%\caption{Simulation Results}
-%\label{fig_sim}
-%\end{figure}
 
-% Note that IEEE typically puts floats only at the top, even when this
-% results in a large percentage of a column being occupied by floats.
-
-
-% An example of a double column floating figure using two subfigures.
-% (The subfig.sty package must be loaded for this to work.)
-% The subfigure \label commands are set within each subfloat command, the
-% \label for the overall figure must come after \caption.
-% \hfil must be used as a separator to get equal spacing.
-% The subfigure.sty package works much the same way, except \subfigure is
-% used instead of \subfloat.
-%
-%\begin{figure*}[!t]
-%\centerline{\subfloat[Case I]\includegraphics[width=2.5in]{subfigcase1}%
-%\label{fig_first_case}}
-%\hfil
-%\subfloat[Case II]{\includegraphics[width=2.5in]{subfigcase2}%
-%\label{fig_second_case}}}
-%\caption{Simulation results}
-%\label{fig_sim}
-%\end{figure*}
-%
-% Note that often IEEE papers with subfigures do not employ subfigure
-% captions (using the optional argument to \subfloat), but instead will
-% reference/describe all of them (a), (b), etc., within the main caption.
-
-
-
+The remainder of this paper is organized as follows. 
+Section~II reviews the related literature on vehicle routing problems with time windows, with particular emphasis on stochastic and robust approaches. 
+Section~III introduces the mathematical formulation of the considered capacitated vehicle routing problem with stochastic time windows and demand. 
+Section~IV describes the experimental setup and presents a comprehensive evaluation of the proposed methods under multiple stochastic scenarios. 
+Finally, Section~V concludes the paper and outlines directions for future research.
