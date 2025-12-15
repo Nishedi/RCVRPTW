@@ -34,17 +34,20 @@ The solution methods are implemented as separate modules:
     \item \textbf{TabuSearch:} Implements the metaheuristic optimization procedure. The main method \texttt{run(MaxIterations, TabuSize, Instance, mutationType)} accepts configuration parameters and returns the best solution found. Key features include:
     \begin{itemize}
         \item Initialization with the greedy solution as a starting point
-        \item Neighborhood generation using the specified mutation operator (swap, insert, or invert)
+        \item Neighborhood generation using the specified mutation operator (swap, insert, invert, 2opt, oropt, or cross)
         \item Tabu list management using a queue structure with fixed size
         \item Aspiration criterion allowing tabu moves that improve the best-known solution
         \item Early termination after a specified number of non-improving iterations
     \end{itemize}
     
-    \item \textbf{NeighborhoodGenerator:} Provides methods for generating neighboring solutions through local search operators. The \texttt{GenerateAllSwaps} method supports three mutation types:
+    \item \textbf{NeighborhoodGenerator:} Provides methods for generating neighboring solutions through local search operators. The \texttt{GenerateAllSwaps} method supports six mutation types:
     \begin{itemize}
         \item \textit{swap:} Exchanges two customers between routes or within the same route
         \item \textit{insert:} Removes a customer and reinserts it at a different position
         \item \textit{invert:} Reverses a subsequence of customers within a route
+        \item \textit{2opt:} Classic 2-opt operation that removes two edges and reconnects the path by reversing a segment between two positions
+        \item \textit{oropt:} Removes a sequence of consecutive customers (length 1-3) and reinserts them elsewhere in the route
+        \item \textit{cross:} Swaps two segments of potentially different lengths from different parts of the route(s)
     \end{itemize}
     Each generated neighbor is evaluated immediately, computing cost, penalty, and feasibility metrics.
 \end{itemize}
