@@ -366,4 +366,4 @@ FodyWeavers.xsd
 results_raw_*.csv
 
 # RL trained models
-models/analyze_operators.py
+analyze_operators.py
