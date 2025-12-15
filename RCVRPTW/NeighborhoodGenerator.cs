@@ -322,6 +322,9 @@ public static class NeighborhoodGeneratorLocation
         // równoległe przetwarzanie par (i,j)
         Parallel.For(1, count - 1, i =>
         {
+            // Thread-local random for rand operator (to avoid thread safety issues)
+            Random threadRng = new Random(Guid.NewGuid().GetHashCode());
+            
             // Każdy wątek wykonuje wewnętrzną pętlę sekwencyjnie
             for (int j = i + 1; j < count - 1; j++)
             {
@@ -330,7 +333,33 @@ public static class NeighborhoodGeneratorLocation
                 // DeepCopyLocations zakładamy, że jest bezpieczne do równoległego użycia
                 List<Location> neighbor = DeepCopyLocations(allLocations);
 
-                if (mutationType == "insert")
+                if (mutationType == "rand")
+                {
+                    // Random operator: randomly select one of the available operators
+                    string[] availableOps = { "swap", "insert", "invert", "2opt", "oropt", "cross" };
+                    string selectedOp = availableOps[threadRng.Next(availableOps.Length)];
+                    
+                    if (selectedOp == "insert")
+                        neighbor = insert(neighbor, i, j);
+                    else if (selectedOp == "invert")
+                        neighbor = invert(neighbor, i, j);
+                    else if (selectedOp == "swap")
+                        neighbor = swap(neighbor, i, j);
+                    else if (selectedOp == "2opt")
+                        neighbor = twoOpt(neighbor, i, j);
+                    else if (selectedOp == "oropt")
+                    {
+                        int length = Math.Min(3, Math.Max(1, (j - i) / 3));
+                        neighbor = orOpt(neighbor, i, length, j);
+                    }
+                    else if (selectedOp == "cross")
+                    {
+                        int lengthI = Math.Min(2, count - i - 1);
+                        int lengthJ = Math.Min(2, count - j - 1);
+                        neighbor = crossExchange(neighbor, i, lengthI, j, lengthJ);
+                    }
+                }
+                else if (mutationType == "insert")
                     neighbor = insert(neighbor, i, j);
                 else if (mutationType == "invert")
                     neighbor = invert(neighbor, i, j);
@@ -429,6 +458,7 @@ public static class NeighborhoodGeneratorLocation
         List<Solution> neighbors = new List<Solution>();
         var routeNeighbors = new List<List<Route>>();
         List<Location> allLocations = routes.SelectMany(route => route.Stops).ToList();
+        Random rng = new Random();
         for(int i = 0; i < 5; i++)
         {
             allLocations.Add(allLocations[0]);
@@ -439,7 +469,34 @@ public static class NeighborhoodGeneratorLocation
             {
                 if (i == j) continue;
                 List<Location> neighbor = DeepCopyLocations(allLocations);
-                if(mutationType == "insert")
+                
+                if (mutationType == "rand")
+                {
+                    // Random operator: randomly select one of the available operators
+                    string[] availableOps = { "swap", "insert", "invert", "2opt", "oropt", "cross" };
+                    string selectedOp = availableOps[rng.Next(availableOps.Length)];
+                    
+                    if (selectedOp == "insert")
+                        neighbor = insert(neighbor, i, j);
+                    else if (selectedOp == "invert")
+                        neighbor = invert(neighbor, i, j);
+                    else if (selectedOp == "swap")
+                        neighbor = swap(neighbor, i, j);
+                    else if (selectedOp == "2opt")
+                        neighbor = twoOpt(neighbor, i, j);
+                    else if (selectedOp == "oropt")
+                    {
+                        int length = Math.Min(3, Math.Max(1, (j - i) / 3));
+                        neighbor = orOpt(neighbor, i, length, j);
+                    }
+                    else if (selectedOp == "cross")
+                    {
+                        int lengthI = Math.Min(2, allLocations.Count - i - 1);
+                        int lengthJ = Math.Min(2, allLocations.Count - j - 1);
+                        neighbor = crossExchange(neighbor, i, lengthI, j, lengthJ);
+                    }
+                }
+                else if(mutationType == "insert")
                     neighbor = insert(neighbor, i, j);
                 else if (mutationType == "invert")
                     neighbor = invert(neighbor, i, j);
