@@ -49,19 +49,4 @@ public class Location
 
         }
     }
-
-    public double SampleDemand(Random rng)
-    {
-        if (DemandStdDev == 0) return Demand;
-        double u1 = 1.0 - rng.NextDouble();
-        double u2 = 1.0 - rng.NextDouble();
-        double randStdNormal = Math.Sqrt(-2.0 * Math.Log(u1)) * Math.Sin(2.0 * Math.PI * u2);
-        return Math.Max(0, Demand + DemandStdDev * randStdNormal);
-    }
-
-    public override string ToString()
-    {
-        return $"{Id} {Type} ({X},{Y}) Demand: {Demand:F1} DemandMean: {DemandMean:F1} StdDev: {DemandStdDev:F1} " +
-            $"TW: [{TimeWindow.Start}, {TimeWindow.End}] TWMEAN: [{MeanTimeWindow.Start}, {MeanTimeWindow.End}]";
-    }
 }

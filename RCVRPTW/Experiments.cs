@@ -21,9 +21,8 @@ namespace RCVRPTW
         public double GreedyObjective { get; set; }
         public (double greedyTotalCost, double greedyTotalPenalty, double greedyVOT) GreedyMetrics { get; set; }
         public string MutationType { get; set; }
-        public bool UseRL { get; set; } // Flag to indicate if RL was used
-
-        public double Objective { get; set; } // total cost + penalty + vehicleOpTime
+        public bool UseRL { get; set; } 
+        public double Objective { get; set; }
         public double TotalCost { get; set; }
         public double TotalPenalty { get; set; }
         public double TotalVehicleOperationTime { get; set; }
@@ -163,7 +162,6 @@ namespace RCVRPTW
             {
                 if (!exists) sw.WriteLine(header);
                 string result = $"{res.ScenarioId};{res.FileName};{res.Iterations};{res.TabuSize};{res.MutationType};{res.UseRL};{res.Repeat};{res.Seed};{res.GreedyObjective};{res.GreedyMetrics.greedyTotalCost};{res.GreedyMetrics.greedyTotalPenalty};{res.GreedyMetrics.greedyVOT};{res.Objective};{res.TotalCost};{res.TotalPenalty};{res.TotalVehicleOperationTime};{res.RoutesCount};{res.DurationMs};{string.Join(",", res.GTR)}";
-                //Console.WriteLine($"{res.FileName}:{res.DurationMs}");
                 sw.WriteLine(result);
             }
         }

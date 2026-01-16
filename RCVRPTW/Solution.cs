@@ -7,7 +7,7 @@ public class Route
 {
     public double TruckCapacity { get; set; }
     public double CurrentLoad { get; set; }
-    public List<Location> Stops { get; set; } // Lista ID lokalizacji (np. [hub, customer1, customer2, ..., hub])
+    public List<Location> Stops { get; set; } 
     public double StartTime { get; set; }
     public double Cost { get; set; }
     public double Penalty { get; set; }
@@ -73,15 +73,6 @@ public class Solution
         if (obj == null || GetType() != obj.GetType()) return false;
         Solution other = (Solution)obj;
         if (other.move.i!= this.move.i || other.move.j != this.move.j) return false;
-        //if (other.Routes.Count != this.Routes.Count) return false;
-        //for(int r = 0; r < this.Routes.Count; r++)
-        //{
-        //    if (other.Routes[r].Stops.Count != this.Routes[r].Stops.Count) return false;
-        //    for(int s = 0; s < this.Routes[r].Stops.Count; s++)
-        //    {
-        //        if (other.Routes[r].Stops[s].Id != this.Routes[r].Stops[s].Id) return false;
-        //    }
-        //}
         return true;
     }
 
@@ -105,7 +96,4 @@ public class Solution
             TotalVehicleOperationTime += vehicleOperationTime;
         }
     }
-
-   
-
 }

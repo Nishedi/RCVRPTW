@@ -6,25 +6,17 @@ using static System.Formats.Asn1.AsnWriter;
 
 public static class NeighborhoodGeneratorLocation
 {
-    /// <summary>
-    /// Zwraca wszystkie możliwe sąsiedztwa powstałe przez pojedynczy swap:
-    /// - wewnątrz każdej trasy (Route),
-    /// - pomiędzy wszystkimi parami tras.
-    /// Każdy sąsiad to nowa lista tras (deep copy), z wykonanym jednym swapem.
-    /// </summary>
-    /// 
     public static void Shuffle<T>(IList<T> list, Random rng = null)
     {
         if (rng == null)
             rng = new Random();
 
         int n = list.Count;
-        if (n <= 2) return; // nie ma co tasować
+        if (n <= 2) return; 
 
-        // Tasujemy tylko elementy od indeksu 1 do n-2
         for (int i = n - 2; i > 0; i--)
         {
-            int k = rng.Next(1, i + 1); // losuj z zakresu [1, i]
+            int k = rng.Next(1, i + 1);
             T value = list[k];
             list[k] = list[i];
             list[i] = value;
@@ -105,9 +97,6 @@ public static class NeighborhoodGeneratorLocation
             List<Location> neighbor = DeepCopyLocations(allLocations);
             neighbor.Insert(0, first);
             neighbor.Add(first);
-
-
-
 
             Shuffle(neighbor);
             List<Route> nRoutes = new List<Route>();
@@ -207,9 +196,6 @@ public static class NeighborhoodGeneratorLocation
 
     public static List<Location> twoOpt(List<Location> locations, int i, int j)
     {
-        // 2-opt: reverses the segment between i and j
-        // Named differently from invert for VRP domain clarity, but uses same logic
-        // Ensures i < j before calling invert for consistency
         if (i > j)
         {
             int temp = i;
@@ -221,14 +207,11 @@ public static class NeighborhoodGeneratorLocation
 
     public static List<Location> orOpt(List<Location> locations, int i, int length, int j)
     {
-        // Or-opt: removes a sequence of 'length' customers starting at position i
-        // and inserts it at position j
         List<Location> neighbor = DeepCopyLocations(locations);
         
         if (i < 0 || i + length > neighbor.Count || j < 0 || j > neighbor.Count)
-            return neighbor; // Invalid parameters, return unchanged
+            return neighbor; 
         
-        // Extract the sequence
         List<Location> sequence = new List<Location>();
         for (int k = 0; k < length; k++)
         {
@@ -236,13 +219,11 @@ public static class NeighborhoodGeneratorLocation
                 sequence.Add(neighbor[i + k]);
         }
         
-        // Remove the sequence (always remove from position i, as removal shifts elements)
         for (int k = 0; k < sequence.Count && i < neighbor.Count; k++)
         {
             neighbor.RemoveAt(i);
         }
         
-        // Adjust insertion position if needed
         int insertPos = j;
         if (j > i)
             insertPos = j - length;
@@ -251,7 +232,6 @@ public static class NeighborhoodGeneratorLocation
         if (insertPos > neighbor.Count)
             insertPos = neighbor.Count;
         
-        // Insert the sequence at the new position
         neighbor.InsertRange(insertPos, sequence);
         
         return neighbor;
@@ -259,13 +239,11 @@ public static class NeighborhoodGeneratorLocation
 
     public static List<Location> crossExchange(List<Location> locations, int i, int lengthI, int j, int lengthJ)
     {
-        // Cross-exchange: swaps two segments of potentially different lengths
-        List<Location> neighbor = DeepCopyLocations(locations);
+         List<Location> neighbor = DeepCopyLocations(locations);
         
         if (i < 0 || i + lengthI > neighbor.Count || j < 0 || j + lengthJ > neighbor.Count || i == j)
-            return neighbor; // Invalid parameters
-        
-        // Ensure i comes before j
+            return neighbor; 
+
         if (i > j)
         {
             int tempPos = i, tempLen = lengthI;
@@ -275,11 +253,9 @@ public static class NeighborhoodGeneratorLocation
             lengthJ = tempLen;
         }
         
-        // Check for overlap
         if (i + lengthI > j)
-            return neighbor; // Segments overlap, return unchanged
+            return neighbor; 
         
-        // Extract both segments
         List<Location> segmentI = new List<Location>();
         List<Location> segmentJ = new List<Location>();
         
@@ -289,16 +265,12 @@ public static class NeighborhoodGeneratorLocation
         for (int k = 0; k < lengthJ && j + k < neighbor.Count; k++)
             segmentJ.Add(neighbor[j + k]);
         
-        // Remove both segments (remove the later one first to avoid index issues)
-        // Remove from j (the later position first)
         for (int k = 0; k < segmentJ.Count; k++)
             neighbor.RemoveAt(j);
         
-        // Remove from i (now safe as j was after i)
         for (int k = 0; k < segmentI.Count; k++)
             neighbor.RemoveAt(i);
         
-        // Insert segments in swapped positions
         neighbor.InsertRange(i, segmentJ);
         neighbor.InsertRange(j - lengthI + lengthJ, segmentI);
         
@@ -309,25 +281,20 @@ public static class NeighborhoodGeneratorLocation
     {
         var neighborsBag = new ConcurrentBag<Solution>();
 
-        // Zbiór wszystkich lokacji (w tym depot jako element o Id==0?)
         List<Location> allLocations = routes.SelectMany(route => route.Stops).ToList();
 
-        // ensure depot repeated as in original code
         for (int k = 0; k < 5; k++)
             allLocations.Add(allLocations[0]);
 
         int count = allLocations.Count;
         var depot = allLocations[0];
 
-        // równoległe przetwarzanie par (i,j)
         Parallel.For(1, count - 1, i =>
         {
-            // Każdy wątek wykonuje wewnętrzną pętlę sekwencyjnie
             for (int j = i + 1; j < count - 1; j++)
             {
                 if (i == j) continue;
 
-                // DeepCopyLocations zakładamy, że jest bezpieczne do równoległego użycia
                 List<Location> neighbor = DeepCopyLocations(allLocations);
 
                 if (mutationType == "insert")
@@ -340,26 +307,23 @@ public static class NeighborhoodGeneratorLocation
                     neighbor = twoOpt(neighbor, i, j);
                 else if (mutationType == "oropt")
                 {
-                    // For or-opt, use a fixed sequence length (e.g., 2 or 3)
                     int length = Math.Min(3, Math.Max(1, (j - i) / 3));
                     neighbor = orOpt(neighbor, i, length, j);
                 }
                 else if (mutationType == "cross")
                 {
-                    // For cross-exchange, use small segment lengths
                     int lengthI = Math.Min(2, count - i - 1);
                     int lengthJ = Math.Min(2, count - j - 1);
                     neighbor = crossExchange(neighbor, i, lengthI, j, lengthJ);
                 }
                 else
-                    neighbor = swap(neighbor, i, j); // przypisanie wyniku swap w przypadku default
+                    neighbor = swap(neighbor, i, j); 
 
                 List<Route> nRoutes = new List<Route>();
                 List<Location> nLocations = new List<Location>();
                 var routeWeight = 0.0;
                 bool invalidRoute = false;
 
-                // budowanie tras z listy lokacji
                 foreach (var location in neighbor)
                 {
                     if (location.Id == 0)
@@ -367,11 +331,9 @@ public static class NeighborhoodGeneratorLocation
                         if (nLocations.Count > 0)
                         {
                             var route = new Route(90, nLocations, 0, routeWeight);
-                            // dodaj depot na poczatek i koniec trasy
                             route.Stops.Insert(0, depot);
                             route.Stops.Add(depot);
 
-                            // oblicz metryki trasy (zakladamy, ze bestStartTime jest bezpieczne)
                             (route.Cost, route.Penalty, route.vehicleOperationTime, route.StartTime) = bestStartTime(nLocations, instance);
 
                             nRoutes.Add(route);
@@ -387,7 +349,6 @@ public static class NeighborhoodGeneratorLocation
                     }
                 }
 
-                // sprawdź ograniczenia pojemności
                 foreach (var route in nRoutes)
                 {
                     if (route.CurrentLoad > vehicles[0].Capacity)
@@ -399,9 +360,7 @@ public static class NeighborhoodGeneratorLocation
 
                 if (!invalidRoute && nRoutes.Count > 0)
                 {
-                    // stwórz Solution i policz sumy (lokalnie, w wątku)
                     var solution = new Solution(DeepCopyRoutes(nRoutes));
-                    // reset pól jeśli konstruktor ich nie zeruje
                     solution.TotalPenalty = 0;
                     solution.TotalCost = 0;
                     solution.TotalVehicleOperationTime = 0;
@@ -420,7 +379,6 @@ public static class NeighborhoodGeneratorLocation
             }
         });
 
-        // na koniec zbierz wyniki i posortuj
         var neighbors = neighborsBag.OrderBy(sol => sol.TotalCost).ToList();
         return neighbors;
     }
@@ -559,7 +517,6 @@ public static class NeighborhoodGeneratorLocation
         var copy = new List<Route>();
         foreach (var route in routes)
         {
-            // Załóżmy, że Route ma konstruktor: Route(double cost, List<Location> locations)
             copy.Add(new Route(route.TruckCapacity, new List<Location>(route.Stops),route.StartTime,route.CurrentLoad, route.Cost, route.Penalty, route.vehicleOperationTime));
         }
         return copy;

@@ -1,4 +1,4 @@
-﻿//using MathNet.Numerics.Distributions;
+﻿
 using System;
 
 public static class DemandSampler

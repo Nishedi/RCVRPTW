@@ -5,15 +5,6 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-//public int Id { get; set; }
-//public LocationType Type { get; set; }
-//public int X { get; set; }
-//public int Y { get; set; }
-//public double DemandMean { get; set; }
-//public double DemandStdDev { get; set; }
-//public (int Start, int End) TimeWindow { get; set; }
-//public int ServiceTime { get; set; }
-//public int Priority { get; set; }
 namespace RCVRPTW
 {
     public  class Instance
@@ -78,7 +69,7 @@ namespace RCVRPTW
             }
             DistanceMatrix = createDistanceMatrix();
         }
-        public double[,] createDistanceMatrix() // funkcja generująca macierz odleglosci
+        public double[,] createDistanceMatrix() 
         {
             double[,] distanceMatrix = new double[Locations.Count, Locations.Count];
             for (int i = 0; i < Locations.Count; i++)
@@ -95,6 +86,4 @@ namespace RCVRPTW
         }
 
     }
-     
-
-    }
+}

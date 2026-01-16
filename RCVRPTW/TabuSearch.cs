@@ -10,7 +10,6 @@ namespace RCVRPTW
 {
     internal class TabuSearch
     {
-        // --- Metoda bez RL (pozostawiona bez zmian) ---
         public static Solution run(int MaxIterations, int TabuSize, Instance instance, string mutationtype = "swap", int maxTime = 120)
         {
             Solution bestSolution = GreedyApproaches.generateGreedySolution(instance);
@@ -30,7 +29,6 @@ namespace RCVRPTW
             {
                 Solution bestNeighbor = null;
                 double bestNeighborObjective = double.MaxValue;
-                // Zakładamy, że NeighborhoodGeneratorLocation.GenerateAllSwaps może przyjąć mutationtype
                 string mutation = "swap";
                 if (mutationtype == "random")
                 {
@@ -87,14 +85,10 @@ namespace RCVRPTW
             bestSolution.GreedyMetrics = GreedyMetrics;
             return bestSolution;
         }
-        // ---------------------------------------------------------------------------------------------------
-
-        /// <summary>
-        /// Run Tabu Search with RL-based operator selection
-        /// </summary>
+        
         public static Solution runWithRL(int MaxIterations, int TabuSize, Instance instance, int maxTime = 3600, int? seed = null, string? modelPath = null)
         {
-            // Initialize RL agent - either load from file or create new
+            
             RLOperatorSelector rlAgent;
             if (!string.IsNullOrEmpty(modelPath) && File.Exists(modelPath))
             {
@@ -106,9 +100,9 @@ namespace RCVRPTW
                 rlAgent = new RLOperatorSelector(
                     learningRate: 0.1,
                     discountFactor: 0.9,
-                    epsilon: 1.0,               // Start with full exploration
-                    epsilonDecay: 0.999,        // Zmieniono na wolniejszą dekay'ę
-                    epsilonMin: 0.01,           // Zmieniono na niższą wartość minimalną, aby RL dłużej miał wpływ
+                    epsilon: 1.0,               
+                    epsilonDecay: 0.999,        
+                    epsilonMin: 0.01,           
                     seed: seed
                 );
             }
@@ -130,27 +124,22 @@ namespace RCVRPTW
 
             double previousObjective = bestObjective;
             string selectedOperator = "swap";
-
-            // --- Dodano śledzenie stagnacji ---
+            
             int iterationsSinceBestImprovement = 0;
-            // ------------------------------------
 
             while (stopwatch.ElapsedMilliseconds <= maxTime)
             {
                 double currentObjective = currentSolution.TotalCost + currentSolution.TotalPenalty + currentSolution.TotalVehicleOperationTime;
 
-                // --- 1. Wybór operatora z uwzględnieniem stagnacji ---
                 selectedOperator = rlAgent.SelectOperator(
                     currentObjective,
                     bestObjective,
                     iter,
                     MaxIterations,
-                    iterationsSinceBestImprovement);
-                // -----------------------------------------------------
+                    iterationsSinceBestImprovement)
 
                 Solution bestNeighbor = null;
                 double bestNeighborObjective = double.MaxValue;
-                // Użycie wybranego operatora do generowania sąsiedztwa
                 var neighborhood = NeighborhoodGeneratorLocation.GenerateAllSwaps(currentSolution.Routes, instance.Vehicles, instance, selectedOperator);
 
                 foreach (var neighbor in neighborhood.Take(TabuSize * 10))
@@ -173,23 +162,20 @@ namespace RCVRPTW
 
                 currentSolution = bestNeighbor;
 
-                // --- 2. Aktualizacja RL (tylko od drugiej iteracji) z uwzględnieniem stagnacji ---
                 if (iter > 0)
                 {
                     rlAgent.UpdateQValue(
                         previousObjective,
-                        bestNeighborObjective, // Używamy objective najlepszego sąsiada jako aktualnego celu
+                        bestNeighborObjective, 
                         bestObjective,
                         iter - 1,
                         iter,
                         MaxIterations,
                         selectedOperator,
-                        // Przekazujemy stan stagnacji: poprzedni i nowy (przed ewentualnym wyzerowaniem)
                         iterationsSinceBestImprovement - 1,
                         iterationsSinceBestImprovement
                     );
                 }
-                // ----------------------------------------------------------------------------------
 
                 if (bestNeighborObjective < bestObjective)
                 {
@@ -197,9 +183,7 @@ namespace RCVRPTW
                     bestObjective = bestNeighborObjective;
                     notImprovingIterations = 0;
 
-                    // --- Zerowanie licznika stagnacji po poprawie ---
                     iterationsSinceBestImprovement = 0;
-                    // -----------------------------------------------
 
                     Console.Write($"{iter}:{Math.Round(bestObjective)}({selectedOperator[0]}). ");
                 }
@@ -207,9 +191,7 @@ namespace RCVRPTW
                 {
                     notImprovingIterations++;
 
-                    // --- Inkrementacja licznika stagnacji ---
                     iterationsSinceBestImprovement++;
-                    // ----------------------------------------
                 }
 
                 tabuList.Enqueue(currentSolution);
@@ -226,7 +208,6 @@ namespace RCVRPTW
                 previousObjective = currentObjective;
                 iter++;
 
-                // Print progress every 100 iterations
                 if (iter % 100 == 0)
                 {
                     Console.WriteLine($"\nIteration {iter}, Epsilon: {rlAgent.GetEpsilon():F4}, Stagnation: {iterationsSinceBestImprovement}, Time: {stopwatch.Elapsed.TotalSeconds:F1}s");
@@ -242,7 +223,6 @@ namespace RCVRPTW
 
         public static Solution runWithRL_epoc(int MaxIterations, int TabuSize, Instance instance, int maxTime = 3600, int? seed = null, string? modelPath = null)
         {
-            // Initialize RL agent - either load from file or create new
             RLOperatorSelector rlAgent;
             if (!string.IsNullOrEmpty(modelPath) && File.Exists(modelPath))
             {
@@ -254,9 +234,9 @@ namespace RCVRPTW
                 rlAgent = new RLOperatorSelector(
                     learningRate: 0.1,
                     discountFactor: 0.9,
-                    epsilon: 1.0,               // Start with full exploration
-                    epsilonDecay: 0.999,        // Zmieniono na wolniejszą dekay'ę
-                    epsilonMin: 0.01,           // Zmieniono na niższą wartość minimalną, aby RL dłużej miał wpływ
+                    epsilon: 1.0,               
+                    epsilonDecay: 0.999,        
+                    epsilonMin: 0.01,           
                     seed: seed
                 );
             }
@@ -279,15 +259,12 @@ namespace RCVRPTW
             double previousObjective = bestObjective;
             string selectedOperator = "swap";
 
-            // --- Dodano śledzenie stagnacji ---
             int iterationsSinceBestImprovement = 0;
-            // ------------------------------------
 
             while (stopwatch.ElapsedMilliseconds <= maxTime)
             {
                 double currentObjective = currentSolution.TotalCost + currentSolution.TotalPenalty + currentSolution.TotalVehicleOperationTime;
-
-                // --- 1. Wybór operatora z uwzględnieniem stagnacji ---
+              
                 if (iter % 75 == 0) { 
                 selectedOperator = rlAgent.SelectOperator(
                     currentObjective,
@@ -295,11 +272,9 @@ namespace RCVRPTW
                     iter,
                     MaxIterations,
                     iterationsSinceBestImprovement);
-                    // -----------------------------------------------------
                 }
                 Solution bestNeighbor = null;
                 double bestNeighborObjective = double.MaxValue;
-                // Użycie wybranego operatora do generowania sąsiedztwa
                 var neighborhood = NeighborhoodGeneratorLocation.GenerateAllSwaps(currentSolution.Routes, instance.Vehicles, instance, selectedOperator);
 
                 foreach (var neighbor in neighborhood.Take(TabuSize * 10))
@@ -322,23 +297,20 @@ namespace RCVRPTW
 
                 currentSolution = bestNeighbor;
 
-                // --- 2. Aktualizacja RL (tylko od drugiej iteracji) z uwzględnieniem stagnacji ---
                 if (iter > 0)
                 {
                     rlAgent.UpdateQValue(
                         previousObjective,
-                        bestNeighborObjective, // Używamy objective najlepszego sąsiada jako aktualnego celu
+                        bestNeighborObjective, 
                         bestObjective,
                         iter - 1,
                         iter,
                         MaxIterations,
                         selectedOperator,
-                        // Przekazujemy stan stagnacji: poprzedni i nowy (przed ewentualnym wyzerowaniem)
                         iterationsSinceBestImprovement - 1,
                         iterationsSinceBestImprovement
                     );
                 }
-                // ----------------------------------------------------------------------------------
 
                 if (bestNeighborObjective < bestObjective)
                 {
@@ -346,9 +318,7 @@ namespace RCVRPTW
                     bestObjective = bestNeighborObjective;
                     notImprovingIterations = 0;
 
-                    // --- Zerowanie licznika stagnacji po poprawie ---
                     iterationsSinceBestImprovement = 0;
-                    // -----------------------------------------------
 
                     Console.Write($"{iter}:{Math.Round(bestObjective)}({selectedOperator[0]}). ");
                 }
@@ -356,9 +326,7 @@ namespace RCVRPTW
                 {
                     notImprovingIterations++;
 
-                    // --- Inkrementacja licznika stagnacji ---
                     iterationsSinceBestImprovement++;
-                    // ----------------------------------------
                 }
 
                 tabuList.Enqueue(currentSolution);
@@ -375,7 +343,6 @@ namespace RCVRPTW
                 previousObjective = currentObjective;
                 iter++;
 
-                // Print progress every 100 iterations
                 if (iter % 100 == 0)
                 {
                     Console.WriteLine($"\nIteration {iter}, Epsilon: {rlAgent.GetEpsilon():F4}, Stagnation: {iterationsSinceBestImprovement}, Time: {stopwatch.Elapsed.TotalSeconds:F1}s");
@@ -389,37 +356,27 @@ namespace RCVRPTW
             return bestSolution;
         }
 
-
-        /// <summary>
-        /// Train an RL model and save it to a file
-        /// </summary>
         public static RLOperatorSelector TrainAndSaveRLModel(int MaxIterations, int TabuSize, Instance instance, int maxTime, string modelSavePath, int? seed = null)
         {
             Console.WriteLine("=== RL Model Training Mode ===");
             Console.WriteLine($"Training will run for {maxTime} seconds");
-
-            // Train the model and save it
             return TrainRLModel(MaxIterations, TabuSize, instance, maxTime, modelSavePath, seed);
         }
 
-        /// <summary>
-        /// Train an RL model and save it, returning the trained agent
-        /// </summary>
+       
         private static RLOperatorSelector TrainRLModel(int MaxIterations, int TabuSize, Instance instance, int maxTime, string modelSavePath, int? seed)
         {
-            // Set up metrics logging paths
             string? directory = Path.GetDirectoryName(modelSavePath);
             string baseFileName = Path.GetFileNameWithoutExtension(modelSavePath);
             string metricsLogPath = Path.Combine(directory ?? ".", $"{baseFileName}_metrics.csv");
             string summaryPath = Path.Combine(directory ?? ".", $"{baseFileName}_summary.txt");
             string qTablePath = Path.Combine(directory ?? ".", $"{baseFileName}_qtable.csv");
 
-            // Initialize RL agent for training with metrics tracking enabled
             var rlAgent = new RLOperatorSelector(
                 learningRate: 0.1,
                 discountFactor: 0.9,
                 epsilon: 1.0,
-                epsilonDecay: 0.999, // Zmieniono na wolniejszą dekay'ę
+                epsilonDecay: 0.999, 
                 epsilonMin: 0.01,
                 seed: seed,
                 trackMetrics: true,
@@ -444,26 +401,21 @@ namespace RCVRPTW
             double previousObjective = bestObjective;
             string selectedOperator = "swap";
 
-            // --- Dodano śledzenie stagnacji ---
             int iterationsSinceBestImprovement = 0;
-            // ------------------------------------
 
             while (stopwatch.ElapsedMilliseconds <= maxTime)
             {
                 double currentObjective = currentSolution.TotalCost + currentSolution.TotalPenalty + currentSolution.TotalVehicleOperationTime;
 
-                // --- 1. Wybór operatora z uwzględnieniem stagnacji ---
                 selectedOperator = rlAgent.SelectOperator(
                     currentObjective,
                     bestObjective,
                     iter,
                     MaxIterations,
                     iterationsSinceBestImprovement);
-                // -----------------------------------------------------
-
+                
                 Solution bestNeighbor = null;
                 double bestNeighborObjective = double.MaxValue;
-                // Użycie wybranego operatora do generowania sąsiedztwa
                 var neighborhood = NeighborhoodGeneratorLocation.GenerateAllSwaps(currentSolution.Routes, instance.Vehicles, instance, selectedOperator);
 
                 foreach (var neighbor in neighborhood.Take(TabuSize * 10))
@@ -486,43 +438,36 @@ namespace RCVRPTW
 
                 currentSolution = bestNeighbor;
 
-                // --- 2. Aktualizacja RL (tylko od drugiej iteracji) z uwzględnieniem stagnacji ---
                 if (iter > 0)
                 {
                     rlAgent.UpdateQValue(
                         previousObjective,
-                        bestNeighborObjective, // Używamy objective najlepszego sąsiada jako aktualnego celu
+                        bestNeighborObjective, 
                         bestObjective,
                         iter - 1,
                         iter,
                         MaxIterations,
                         selectedOperator,
-                        // Przekazujemy stan stagnacji: poprzedni i nowy (przed ewentualnym wyzerowaniem)
                         iterationsSinceBestImprovement - 1,
                         iterationsSinceBestImprovement
                     );
                 }
-                // ----------------------------------------------------------------------------------
-
+                
                 if (bestNeighborObjective < bestObjective)
                 {
                     bestSolution = bestNeighbor;
                     bestObjective = bestNeighborObjective;
                     notImprovingIterations = 0;
 
-                    // --- Zerowanie licznika stagnacji po poprawie ---
                     iterationsSinceBestImprovement = 0;
-                    // -----------------------------------------------
-
+                   
                     Console.Write($"{iter}:{Math.Round(bestObjective)}({selectedOperator[0]}). ");
                 }
                 else
                 {
                     notImprovingIterations++;
 
-                    // --- Inkrementacja licznika stagnacji ---
                     iterationsSinceBestImprovement++;
-                    // ----------------------------------------
                 }
 
                 tabuList.Enqueue(currentSolution);
@@ -548,10 +493,8 @@ namespace RCVRPTW
             Console.WriteLine($"\nRL Training completed {iter} iterations in {stopwatch.Elapsed.TotalSeconds} seconds.");
             Console.WriteLine(rlAgent.GetStatistics());
 
-            // Save the trained model
             rlAgent.SaveModel(modelSavePath);
 
-            // Save training metrics and summary
             rlAgent.SaveTrainingSummary(summaryPath, iter, stopwatch.Elapsed.TotalSeconds);
             rlAgent.ExportQTableToCSV(qTablePath);
 

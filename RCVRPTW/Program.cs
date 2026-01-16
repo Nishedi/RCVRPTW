@@ -1,6 +1,4 @@
-﻿// See https://aka.ms/new-console-template for more information
-
-using Microsoft.VisualBasic.FileIO;
+﻿using Microsoft.VisualBasic.FileIO;
 using RCVRPTW;
 using System.Diagnostics;
 using System.IO;
@@ -36,7 +34,6 @@ public static class Program
                 }
             }
             
-            // Check if RL mode is requested or training mode
             if (args.Length > 2)
             {
                 if (args[2].ToLower() == "rl")
@@ -53,8 +50,7 @@ public static class Program
                 
                 else if (args[2].ToLower().StartsWith("model:"))
                 {
-                    // Load pre-trained model
-                    rlModelPath = args[2].Substring(6); // Remove "model:" prefix
+                    rlModelPath = args[2].Substring(6); 
                     useRL = true;
                     Console.WriteLine($"RL mode with pre-trained model: {rlModelPath}");
                 }
@@ -77,7 +73,6 @@ public static class Program
 
             string fileType = args[0];
             
-            // Training mode - train and save model
             if (trainMode && !both)
             {
                 Console.WriteLine($"Training RL model for file type: {fileType}, maxTime: {maxTime}s");
@@ -99,7 +94,6 @@ public static class Program
             }
             else if (both)
             {
-                // Run experiments with and without RL
                 Console.WriteLine($"Running experiments for file type: {fileType}, maxTime of scenario: {maxTime}s, both RL and non-RL");
                 List<Scenario> scenarios = InstanceGenerator.GenerateManyScenarios(numberScenarios, "pliki//100 lokacji//" + fileType + ".txt");
                 Stopwatch sw = Stopwatch.StartNew();
@@ -125,29 +119,9 @@ public static class Program
                 Console.WriteLine("\nRunning experiments WITH RL:");
                 List<ExperimentResult> rawResults = ExperimentRunner.RunExperiments(scenarios, iters, tabu, mutationtypes, fileType, repeats: 1, baseSeed: 42, parallel: false, maxTime: maxTime, useRL: useRL, rlModelPath: rlModelPath, defaultFilePath: $"results_raw_RL_{fileType}_");
                 Console.WriteLine("\nRunning experiments WITH RL epochs:");
-                //List<ExperimentResult> rawResultsv2 = ExperimentRunner.RunExperiments(scenarios, iters, tabu, mutationtypes, fileType, repeats: 1, baseSeed: 42, parallel: false, maxTime: maxTime, useRL: useRL, rlModelPath: rlModelPath, epochs: true);
-                //Console.WriteLine($"\nAll experiments completed in {sw.Elapsed.TotalSeconds} seconds.");
-
-                //Console.WriteLine("Results for non RL operator");
-                //foreach (var res in rawResultsNonRL)
-                //{
-                //    Console.WriteLine($"{rawResultsNonRL.IndexOf(res)}: GREEDY={res.GreedyObjective} Tabu={res.Objective} MutationType={res.MutationType}");
-                //}
-
-
-                //foreach (var res in rawResults)
-                //{
-                //    Console.WriteLine($"{rawResults.IndexOf(res)}: GREEDY={res.GreedyObjective} Tabu={res.Objective} MutationType=RL");
-                //}
-                //foreach (var res in rawResultsv2)
-                //{
-                //    Console.WriteLine($"{rawResultsv2.IndexOf(res)}: GREEDY={res.GreedyObjective} Tabu={res.Objective} MutationType=RL epochs");
-                //}
-
-            }
+             }
             else
             {
-                // Regular experiment mode
                 Console.WriteLine($"Running experiments for file type: {fileType}, maxTime of scenario: {maxTime}s, RL: {useRL}");
                 List<Scenario> scenarios = InstanceGenerator.GenerateManyScenarios(numberScenarios, "pliki//100 lokacji//" + fileType + ".txt");
                 Stopwatch sw = Stopwatch.StartNew();
@@ -155,23 +129,6 @@ public static class Program
                 List<ExperimentResult> rawResults = ExperimentRunner.RunExperiments(scenarios, iters, tabu, mutationtypes, fileType, repeats: 1, baseSeed: 42, parallel: false, maxTime: maxTime, useRL: useRL, rlModelPath: rlModelPath);
                 Console.WriteLine($"\nAll experiments completed in {sw.Elapsed.TotalSeconds} seconds.");
             }
-            //Console.WriteLine($"Running parameter tuning for file type: {fileType}");
-            //int repeats = 3;
-            //int maxTime = 300;
-            //if(args.Length > 1) {                 
-            //    if(int.TryParse(args[1], out int parsedRepeats))
-            //    {
-            //        repeats = parsedRepeats;
-            //    }
-            //}
-            //if(args.Length > 2) {                 
-            //    if(int.TryParse(args[2], out int parsedMaxTime))
-            //    {
-            //        maxTime = parsedMaxTime;
-            //    }
-            //}
-
-            //TestParameters testParameters = new TestParameters(fileType,repeats,maxTime);
         }     
     }
 }

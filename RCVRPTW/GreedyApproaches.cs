@@ -8,7 +8,7 @@ namespace RCVRPTW
 {
     internal class GreedyApproaches
     {
-        public static Solution generateGreedySolution(Instance instance) //wprowadzic czekanie jezeli sie oplaca
+        public static Solution generateGreedySolution(Instance instance) 
         {
             var (greedyGTR, vehicleStarts) = createGreedyGTR(instance);
             List<Route> routes = new List<Route>();
@@ -25,11 +25,10 @@ namespace RCVRPTW
                     result.Add(new Route(instance.Vehicles[numRoutes].Capacity, new List<Location>(current), vehicleStarts[numRoutes], currentLoad));
                     current.Clear();
                     currentLoad = 0.0;
-                    current.Add(loc); // zaczynamy nową trasę od bazy
+                    current.Add(loc);
                     numRoutes++;
                 }
             }
-            // Jeśli coś zostało, dodaj jako ostatnią trasę
             if (current.Count > 1)
                 result.Add(new Route(instance.Vehicles[numRoutes].Capacity, new List<Location>(current), vehicleStarts[numRoutes], currentLoad));
 
@@ -48,14 +47,14 @@ namespace RCVRPTW
             double vehicleTime = 0;
             double currentLoad = 0.0;
 
-            initialRoute.Add(locations[0]); // Start z bazy
+            initialRoute.Add(locations[0]); 
 
             while (visited.Contains(false))
             {
-                Location current = locations[0]; // Start z bazy
+                Location current = locations[0]; 
                 visited[current.Id] = true;
                 vehicleTime = 0;
-                currentLoad = 0.0; // Reset załadunku przy starcie nowego pojazdu
+                currentLoad = 0.0; 
 
                 while (true)
                 {
@@ -69,9 +68,8 @@ namespace RCVRPTW
                             double demand = location.Demand;
                             double vehicleCapacity = Vehicles[vehicleNumber].Capacity;
 
-                            // UWAGA: sprawdzamy czy możemy dodać klienta do aktualnego pojazdu
                             if (currentLoad + demand > vehicleCapacity)
-                                continue; // nie mieści się, pomiń tego klienta
+                                continue; 
 
                             double distance = distanceMatrix[current.Id, location.Id];
                             double estimatedUpperTimeLeft = location.TimeWindow.End - vehicleTime;
@@ -88,7 +86,6 @@ namespace RCVRPTW
                         }
                     }
 
-                    // Jeśli nie ma dostępnych klientów, wróć do bazy
                     if (nextCustomer == null && current.Id != 0 || vehicleTime >= locations[0].TimeWindow.End)
                     {
                         initialRoute.Add(locations[0]);
@@ -124,7 +121,7 @@ namespace RCVRPTW
 
                     initialRoute.Add(nextCustomer);
                     visited[nextCustomer.Id] = true;
-                    currentLoad += nextCustomer.Demand; // AKTUALIZUJ bieżący załadunek!
+                    currentLoad += nextCustomer.Demand;
 
                     current = nextCustomer;
                 }
