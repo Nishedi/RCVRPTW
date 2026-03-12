@@ -474,32 +474,9 @@ public static class NeighborhoodGeneratorLocation
 
     public static (double bestCost, double bestPenalty, double bestVehicleOperationTime, double bestStartTime) bestStartTime(List<Location> stops, Instance instance)
     {
-        int multiplier = Math.Max(8, stops.Count);
-        double[] bestStartTimes = new double[multiplier];
-        multiplier = Math.Min(20, multiplier);
-        for (int i = 0; i < multiplier; i++)
-        {
-            if (stops[1].TimeWindow.Start * i / multiplier > stops[0].TimeWindow.End) break;
-            if (stops[1].TimeWindow.Start > 0)
-                bestStartTimes[i] = stops[1].TimeWindow.Start * i / multiplier;
-            else
-                bestStartTimes[i] = i * 10;
-            
-        }
-        double bestTotalCost = double.MaxValue;
-        double bestStartTime = stops[1].TimeWindow.Start; 
-        var (bestCost, bestPenalty, bestVehicleOperationTime) = (0.0, 0.0, 0.0);
-        foreach (var startTime in bestStartTimes)
-        {
-            var (cost, penalty, vehicleOperationTime) = Utils.calculateMetrics(startTime, stops, instance);
-            if (cost + penalty + vehicleOperationTime<bestTotalCost)
-            {
-                bestTotalCost = cost + penalty + vehicleOperationTime;
-                bestStartTime = startTime;
-                (bestCost, bestPenalty, bestVehicleOperationTime) = (cost, penalty, vehicleOperationTime);
-            }
-        }
-        return (bestCost, bestPenalty, bestVehicleOperationTime,bestStartTime);   
+        var startTime = 0; 
+        var (cost, penalty, vehicleOperationTime) = Utils.calculateMetrics(startTime, stops, instance);
+        return (cost, penalty, vehicleOperationTime, startTime);
     } 
 
     

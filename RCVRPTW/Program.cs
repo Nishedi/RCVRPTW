@@ -8,14 +8,15 @@ public static class Program
 {
     static int[] iters = new[] { /*100, 500, 2000*/200 };
     static int[] tabu = new[] { 50 };
-    static int numberScenarios = 10;
+    static int numberScenarios = 1;
     static string[] fileNames = new[] { "pliki//100 lokacji//C101.txt",
         "pliki//100 lokacji//C201.txt", "pliki//100 lokacji//R101.txt", "pliki//100 lokacji//R201.txt",
         "pliki//100 lokacji//RC101.txt", "pliki//100 lokacji//RC201.txt"
     };
-    static string[] mutationtypes = new[] { "swap", "invert", "insert", "2opt", "oropt", "rand" };
+    static string[] mutationtypes = new[] { "swap" };//, "invert", "insert", "2opt", "oropt", "rand" };
     static void Main(string[] args)
     {
+        //args = new[] { "CTEST", "10" };
         if (args.Length > 0)
         {
             int maxTime = 1;
@@ -128,8 +129,45 @@ public static class Program
 
                 List<ExperimentResult> rawResults = ExperimentRunner.RunExperiments(scenarios, iters, tabu, mutationtypes, fileType, repeats: 1, baseSeed: 42, parallel: false, maxTime: maxTime, useRL: useRL, rlModelPath: rlModelPath);
                 Console.WriteLine($"\nAll experiments completed in {sw.Elapsed.TotalSeconds} seconds.");
+
+                
             }
-        }     
+        }
+        else
+        {
+            fileNames = new[] { "CTEST9.txt", "CTEST.txt", "CTEST11.txt", "CTEST12.txt", "CTEST13.txt", "CTEST14.txt", "CTEST15.txt" };
+            //fileNames = new [] { "CTEST.txt" }; 
+            Dictionary<string, (double gurobi, double experiment, int time)> results = new Dictionary<string, (double gurobi, double experiment, int time)>();
+            foreach (var file in fileNames)
+            {
+                Console.WriteLine("Tryb Gurobi");
+                string testFile = "pliki//"+file;
+
+                // Generujemy jedną instancję przy użyciu Twojego generatora
+                var scenarios = InstanceGenerator.GenerateManyScenarios(1, testFile);
+                
+                Instance instance = scenarios[0].Instance;
+
+                // Odpalamy solver z limitem czasu, np. 5 minut (300 sekund)
+                Stopwatch sw = Stopwatch.StartNew();
+                var gurobires = CVRPTW_Model.Solve(instance, timeLimitSeconds: 300.0);
+                var executionTime = sw.Elapsed.TotalSeconds;
+
+
+
+                List<ExperimentResult> rawResults = ExperimentRunner.RunExperiments(scenarios, iters, tabu, mutationtypes, file, repeats: 1, baseSeed: 42, parallel: false, maxTime: (int) executionTime, useRL: false, rlModelPath: null);
+                results.Add(file, ((int)gurobires, (int) rawResults[0].Objective, (int)sw.Elapsed.TotalSeconds));
+                Console.WriteLine($"\nAll experiments completed in {sw.Elapsed.TotalSeconds} seconds.");
+            }
+            using (var writer = new StreamWriter("results_comparison.csv"))
+                {
+                    writer.WriteLine("File,GurobiCost,ExperimentCost,gurobi_vs_tabu,time");
+                    foreach (var kvp in results)
+                    {
+                        writer.WriteLine($"{kvp.Key},{kvp.Value.gurobi},{kvp.Value.experiment},{(kvp.Value.gurobi- kvp.Value.experiment)/ kvp.Value.experiment},{kvp.Value.time}");
+                    }
+                }
+            }
     }
 }
 namespace RCVRPTW
@@ -178,7 +216,7 @@ namespace RCVRPTW
 
         public static Scenario GenerateInstance(int scenarioId, Random rng, string filename)
         {
-            var preparedInstance = new Instance(filename, 100, true, true,
+            var preparedInstance = new Instance(filename, 10, true, true,
                 waitingFactor: 1.0, distanceFactor: 1.0, penaltyFactor: 2.0,
                 toEarlyPenaltyFactor: 1.0, toLatePenaltyFactor: 2.0, rng
                 );

@@ -21,21 +21,12 @@ namespace RCVRPTW
                 vehicleOperationTime += instance.DistanceMatrix[prevCity.Id, actualCity.Id];
                 if (vehicleOperationTime < actualCity.TimeWindow.Start)
                 {
-                    double costOfWaiting = actualCity.TimeWindow.Start - vehicleOperationTime;
-                    double toEarlyPenalty = Math.Min(costOfWaiting, actualCity.ServiceTime) * instance.TooEarlyPenaltyFactor; //tutaj mozna dodac jakis wspolczynnik jakby byly różne kary za zbyt wczesne dotarcie
-                    if (costOfWaiting <= toEarlyPenalty)//to na sytuacje gdyby kara byla wieksza niz 1 * to co się wykonywało przed czasem
-                    {
-                        vehicleOperationTime += costOfWaiting;
-                    }
-                    else
-                    {
-                        penalty += toEarlyPenalty;
-                    }
+                    penalty += (actualCity.TimeWindow.Start - vehicleOperationTime) * instance.TooEarlyPenaltyFactor;
                 }
                 vehicleOperationTime += actualCity.ServiceTime;
                 if (vehicleOperationTime > actualCity.TimeWindow.End)
                 {
-                    double toLatePenalty = Math.Min(actualCity.ServiceTime, vehicleOperationTime - actualCity.TimeWindow.End)*instance.TooLatePenaltyFactor;
+                    double toLatePenalty = (vehicleOperationTime - actualCity.TimeWindow.End) * instance.TooLatePenaltyFactor;
                     penalty += toLatePenalty;
                 }
             }
