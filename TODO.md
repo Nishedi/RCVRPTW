@@ -1,5 +1,5 @@
 1. Wkład naukowy i literatura
-- Wzmocnienie nowości metodologicznej: Wykazać nowatorskie elementy modelu lub algorytmu, ponieważ obecny model MILP i operatorzy Tabu Search są uznawane za standardowe.
+[] Wzmocnienie nowości metodologicznej: Wykazać nowatorskie elementy modelu lub algorytmu, ponieważ obecny model MILP i operatorzy Tabu Search są uznawane za standardowe.
 - Pozycjonowanie względem literatury: Jasno określić różnice między obecną pracą a badaniami Munari i in. (2018), Zhang i in. (2021) oraz Shen i in. (2022).
 - Rozszerzenie listy referencji: Dodać więcej pozycji bibliograficznych, w tym najnowsze prace z zakresu AI/Machine Learning w VRP.
 - Kontekst teoretyczny: Odnieść się do szerszej literatury dotyczącej optymalizacji odpornej (robust optimization) i data-driven optimization.
