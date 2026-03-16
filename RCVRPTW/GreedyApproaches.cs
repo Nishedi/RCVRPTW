@@ -11,6 +11,7 @@ namespace RCVRPTW
         public static Solution generateGreedySolution(Instance instance) 
         {
             var (greedyGTR, vehicleStarts) = createGreedyGTR(instance);
+            for (int i = 0; i < vehicleStarts.Count; i++) vehicleStarts[i] = 0;
             List<Route> routes = new List<Route>();
             var result = new List<Route>();
             var current = new List<Location>();

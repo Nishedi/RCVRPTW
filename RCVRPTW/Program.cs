@@ -2,12 +2,15 @@
 using RCVRPTW;
 using System.Diagnostics;
 using System.IO;
+using System.Numerics;
 
 
 public static class Program
 {
     static int[] iters = new[] { /*100, 500, 2000*/200 };
+    static int[] FoodSourcesCounts = new[] { 20/*100, 500, 2000*/};
     static int[] tabu = new[] { 50 };
+    static int[] limits = new[] { 100 }; 
     static int numberScenarios = 1;
     static string[] fileNames = new[] { "pliki//100 lokacji//C101.txt",
         "pliki//100 lokacji//C201.txt", "pliki//100 lokacji//R101.txt", "pliki//100 lokacji//R201.txt",
@@ -16,15 +19,15 @@ public static class Program
     static string[] mutationtypes = new[] { "swap" };//, "invert", "insert", "2opt", "oropt", "rand" };
     static void Main(string[] args)
     {
-        //args = new[] { "CTEST", "10" };
+        //args = new[] { "C201", "3", "1" };
         if (args.Length > 0)
         {
+            Console.WriteLine($"Running experiments for file type: {args[0]} {args[1]} second per test");
             int maxTime = 1;
+            int numberScenarios = 1;
             bool useRL = false;
             string? rlModelPath = null;
-            bool trainMode = false;
-            bool both = false;
-            bool both2 = false;
+            
             string[] results = { };
 
             if (args.Length > 1)
@@ -33,141 +36,84 @@ public static class Program
                 {
                     maxTime = parsedMaxTime;
                 }
+                if (int.TryParse(args[2], out int parsednumberScenarios))
+                {
+                    numberScenarios = parsednumberScenarios;
+                }
             }
             
-            if (args.Length > 2)
-            {
-                if (args[2].ToLower() == "rl")
-                {
-                    useRL = true;
-                    Console.WriteLine("RL mode enabled - operators will be selected using reinforcement learning");
-                }
-                else if (args[2].ToLower() == "train")
-                {
-                    trainMode = true;
-                    useRL = true;
-                    Console.WriteLine("RL Training mode enabled - model will be trained and saved");
-                }
-                
-                else if (args[2].ToLower().StartsWith("model:"))
-                {
-                    rlModelPath = args[2].Substring(6); 
-                    useRL = true;
-                    Console.WriteLine($"RL mode with pre-trained model: {rlModelPath}");
-                }
-            }
-            if(args.Length > 3)
-            {
-                if (args[3].ToLower() == "both")
-                {
-                    both = true;
-                    useRL = true;
-                    Console.WriteLine("Both mode enabled - experiments will be run with and without RL for comparison");
-                }
-                if (args[3].ToLower() == "both2")
-                {
-                    both2 = true;
-                    Console.WriteLine("Both mode enabled - experiments will be run with and without RL for comparison");
-                }
-
-            }
-
+            
             string fileType = args[0];
-            
-            if (trainMode && !both)
-            {
-                Console.WriteLine($"Training RL model for file type: {fileType}, maxTime: {maxTime}s");
-                List<Scenario> scenarios = InstanceGenerator.GenerateManyScenarios(1, "pliki//100 lokacji//" + fileType + ".txt");
-                
-                if (scenarios.Count > 0)
-                {
-                    string modelDir = "models";
-                    if (!Directory.Exists(modelDir))
-                    {
-                        Directory.CreateDirectory(modelDir);
-                    }
-                    
-                    string modelPath = Path.Combine(modelDir, $"rl_model_{fileType}_{DateTime.Now:yyyyMMdd_HHmmss}.json");
-                    var trainedAgent = TabuSearch.TrainAndSaveRLModel(iters[0], tabu[0], scenarios[0].Instance, maxTime, modelPath, seed: 42);
-                    Console.WriteLine($"\nModel training completed and saved to: {modelPath}");
-                    Console.WriteLine("You can now use this model with: dotnet run <fileType> <maxTime> model:" + modelPath);
-                }
-            }
-            else if (both)
-            {
-                Console.WriteLine($"Running experiments for file type: {fileType}, maxTime of scenario: {maxTime}s, both RL and non-RL");
-                List<Scenario> scenarios = InstanceGenerator.GenerateManyScenarios(numberScenarios, "pliki//100 lokacji//" + fileType + ".txt");
-                Stopwatch sw = Stopwatch.StartNew();
-                
-                Console.WriteLine("Running experiments WITHOUT RL:");
-                List<ExperimentResult> rawResultsNonRL = ExperimentRunner.RunExperiments(scenarios, iters, tabu, mutationtypes, fileType, repeats: 1, baseSeed: 42, parallel: false, maxTime: maxTime, useRL: false);
-                
-                Console.WriteLine("\nRunning experiments WITH RL:");
-                List<ExperimentResult> rawResultsRL = ExperimentRunner.RunExperiments(scenarios, iters, tabu, mutationtypes, fileType, repeats: 1, baseSeed: 42, parallel: false, maxTime: maxTime, useRL: true, rlModelPath: rlModelPath);
-                
-                Console.WriteLine($"\nAll experiments completed in {sw.Elapsed.TotalSeconds} seconds.");
-            }
-            else if (both2)
-            {
-                Console.WriteLine($"Running experiments for file type: {fileType}, maxTime of scenario: {maxTime}s, both RL and non-RL");
-                List<Scenario> scenarios = InstanceGenerator.GenerateManyScenarios(numberScenarios, "pliki//100 lokacji//" + fileType + ".txt");
-                Stopwatch sw = Stopwatch.StartNew();
+            var scenarios = InstanceGenerator.GenerateManyScenarios(numberScenarios, "pliki//100 lokacji//" + fileType + ".txt"); Stopwatch sw = Stopwatch.StartNew();
 
-                Console.WriteLine("Running experiments WITHOUT RL:");
-                List<ExperimentResult> rawResultsNonRL = ExperimentRunner.RunExperiments(scenarios, iters, tabu, mutationtypes, fileType, repeats: 1, baseSeed: 42, parallel: false, maxTime: maxTime, useRL: false, defaultFilePath: $"results_raw_no_RL_{fileType}_");
 
-                mutationtypes = new[] { "rl_operator" };
-                Console.WriteLine("\nRunning experiments WITH RL:");
-                List<ExperimentResult> rawResults = ExperimentRunner.RunExperiments(scenarios, iters, tabu, mutationtypes, fileType, repeats: 1, baseSeed: 42, parallel: false, maxTime: maxTime, useRL: useRL, rlModelPath: rlModelPath, defaultFilePath: $"results_raw_RL_{fileType}_");
-                Console.WriteLine("\nRunning experiments WITH RL epochs:");
-             }
-            else
-            {
-                Console.WriteLine($"Running experiments for file type: {fileType}, maxTime of scenario: {maxTime}s, RL: {useRL}");
-                List<Scenario> scenarios = InstanceGenerator.GenerateManyScenarios(numberScenarios, "pliki//100 lokacji//" + fileType + ".txt");
-                Stopwatch sw = Stopwatch.StartNew();
-
-                List<ExperimentResult> rawResults = ExperimentRunner.RunExperiments(scenarios, iters, tabu, mutationtypes, fileType, repeats: 1, baseSeed: 42, parallel: false, maxTime: maxTime, useRL: useRL, rlModelPath: rlModelPath);
-                Console.WriteLine($"\nAll experiments completed in {sw.Elapsed.TotalSeconds} seconds.");
-
-                
-            }
+            TestParametersBee testBee = new TestParametersBee(fileType, repeats: 2, maxTime: maxTime, numberScenario: numberScenarios, scenarios: scenarios);
+            TestParameters testTabu = new TestParameters(fileType, repeats: 2, maxTime: maxTime, numberScenario: numberScenarios, scenarios: scenarios);
         }
         else
         {
-            fileNames = new[] { "CTEST9.txt", "CTEST.txt", "CTEST11.txt", "CTEST12.txt", "CTEST13.txt", "CTEST14.txt", "CTEST15.txt" };
-            //fileNames = new [] { "CTEST.txt" }; 
-            Dictionary<string, (double gurobi, double experiment, int time)> results = new Dictionary<string, (double gurobi, double experiment, int time)>();
+            fileNames = new[] { "CTEST9.txt", "CTEST.txt", "CTEST11.txt", "CTEST12.txt"};
+
+            fileNames = new [] { "100 lokacji//C101.txt" }; 
+            //fileNames = new[] { "CTEST9.txt" }
+            Dictionary<string, (double gurobi, double experiment, double beeExperiment, int time)> results = new Dictionary<string, (double gurobi, double experiment, double experimentBee, int time)>();
             foreach (var file in fileNames)
             {
+                bool gurobi = false;
                 Console.WriteLine("Tryb Gurobi");
                 string testFile = "pliki//"+file;
 
-                // Generujemy jedną instancję przy użyciu Twojego generatora
-                var scenarios = InstanceGenerator.GenerateManyScenarios(1, testFile);
-                
-                Instance instance = scenarios[0].Instance;
+                var scenarios = InstanceGenerator.GenerateManyScenarios(5, testFile);
 
-                // Odpalamy solver z limitem czasu, np. 5 minut (300 sekund)
-                Stopwatch sw = Stopwatch.StartNew();
-                var gurobires = CVRPTW_Model.Solve(instance, timeLimitSeconds: 300.0);
-                var executionTime = sw.Elapsed.TotalSeconds;
-
+                Stopwatch sw2 = Stopwatch.StartNew();
+                var executionTime = 600;
+                List<double> gurobiresults = new List<double>();
+                for(int i = 0; i < scenarios.Count; i++)
+                {
+                    Stopwatch sw = Stopwatch.StartNew();
+                    Instance instance = scenarios[i].Instance;
+                    if (gurobi)
+                        gurobiresults.Add(CVRPTW_Model.Solve(instance, timeLimitSeconds: 600.0));
+                    else
+                        gurobiresults.Add(0.0);
+                    executionTime = (int) sw.Elapsed.TotalSeconds;
+                }
+                if (gurobi)
+                    executionTime = Math.Min(120,Math.Max(executionTime, 10));
+                else
+                    executionTime = 300;
 
 
                 List<ExperimentResult> rawResults = ExperimentRunner.RunExperiments(scenarios, iters, tabu, mutationtypes, file, repeats: 1, baseSeed: 42, parallel: false, maxTime: (int) executionTime, useRL: false, rlModelPath: null);
-                results.Add(file, ((int)gurobires, (int) rawResults[0].Objective, (int)sw.Elapsed.TotalSeconds));
-                Console.WriteLine($"\nAll experiments completed in {sw.Elapsed.TotalSeconds} seconds.");
-            }
-            using (var writer = new StreamWriter("results_comparison.csv"))
+                List<ExperimentResultBee> rawBeeResults = ExperimentRunner.RunExperimentsBee(scenarios, FoodSourcesCounts, limits, mutationtypes, file, repeats: 1, baseSeed: 42, parallel: false, maxTime: (int) executionTime);
+
+                for (int i = 0; i < rawResults.Count; i++)
                 {
-                    writer.WriteLine("File,GurobiCost,ExperimentCost,gurobi_vs_tabu,time");
+                    results.Add(i+"_"+file, ((int)gurobiresults[i], (int)rawResults[i].Objective, (int)rawBeeResults[i].Objective, -1));
+                    Console.WriteLine(i+"_"+file +" "+ ((int)gurobiresults[i] +" "+ (int)rawResults[i].Objective +" "+ (int)rawBeeResults[i].Objective));
+                }
+               
+                Console.WriteLine($"\nAll experiments completed in {sw2.Elapsed.TotalSeconds} seconds.");
+                using (var writer = new StreamWriter("results_comparison.csv"))
+                {
+                    writer.WriteLine("File,GurobiCost,ExperimentCost,BeeExperimentCost,gurobi_vs_tabu");
                     foreach (var kvp in results)
                     {
-                        writer.WriteLine($"{kvp.Key},{kvp.Value.gurobi},{kvp.Value.experiment},{(kvp.Value.gurobi- kvp.Value.experiment)/ kvp.Value.experiment},{kvp.Value.time}");
+                        writer.WriteLine($"{kvp.Key},{kvp.Value.gurobi},{kvp.Value.experiment},{kvp.Value.beeExperiment},{(kvp.Value.gurobi - kvp.Value.experiment) / kvp.Value.experiment}");
+                        Console.WriteLine($"{kvp.Key},{kvp.Value.gurobi},{kvp.Value.experiment},{kvp.Value.beeExperiment},{(kvp.Value.gurobi - kvp.Value.experiment) / kvp.Value.experiment}");
+
                     }
                 }
             }
+            using (var writer = new StreamWriter("results_comparison.csv"))
+            {
+                writer.WriteLine("File,GurobiCost,ExperimentCost,BeeExperimentCost,gurobi_vs_tabu");
+                foreach (var kvp in results)
+                {
+                    writer.WriteLine($"{kvp.Key},{kvp.Value.gurobi},{kvp.Value.experiment},{kvp.Value.beeExperiment},{(kvp.Value.gurobi - kvp.Value.experiment) / kvp.Value.experiment}");
+                }
+            }
+        }
     }
 }
 namespace RCVRPTW
@@ -177,17 +123,55 @@ namespace RCVRPTW
         public int [] iters { get; set; }
         public int [] TabuSizes { get; set; }
         public string[] mutationtypes { get; set; }
-        public TestParameters(string fileType, int repeats, int maxTime)
+        public TestParameters(string fileType, int repeats, int maxTime, int numberScenario, List<Scenario> scenarios = null)
         {
             iters = new[] { 50,100,150,200,250,300 };
             mutationtypes = new[] { "swap", "invert", "insert" };
             TabuSizes = new[] { 10,20,30,40,50 };
-            var  numberScenarios = 1;
+            
 
-            List<Scenario> scenarios = InstanceGenerator.GenerateManyScenarios(numberScenarios, "pliki//100 lokacji//" + fileType + ".txt");
-            Stopwatch sw = Stopwatch.StartNew();
+            if (fileType.Contains("C101"))
+            {
+                iters = new[] { 200 };
+                mutationtypes = new[] { "swap" };
+                TabuSizes = new[] {  50 };
+            }
+            iters = new[] { 200 };
+            mutationtypes = new[] { "swap" };
+            TabuSizes = new[] { 50 };
+
+            if (scenarios == null)
+                scenarios = InstanceGenerator.GenerateManyScenarios(numberScenario, "pliki//100 lokacji//" + fileType + ".txt"); Stopwatch sw = Stopwatch.StartNew();
             List<ExperimentResult> rawResults = ExperimentRunner.RunExperiments(scenarios, iters, TabuSizes, mutationtypes, fileType, 
                 repeats: repeats, baseSeed: 42, parallel: false,maxTime:maxTime,defaultFilePath:"results_raw_parameter_tuning_");
+            Console.WriteLine($"\nAll experiments completed in {sw.Elapsed.TotalSeconds} seconds.");
+        }
+    }
+    public class TestParametersBee
+    {
+        int[] FoodSourcesCounts { get; set; }
+        int[] Limits { get; set; }
+        public string[] mutationtypes { get; set; }
+        public TestParametersBee(string fileType, int repeats, int maxTime, int numberScenario, List<Scenario> scenarios = null)
+        {
+            
+            FoodSourcesCounts = new[] { 50, 100, 200 };
+            mutationtypes = new[] { "swap", "2opt", "oropt", "rand" };
+            Limits = new[] { 150, 300 };
+            if (fileType.Contains("C101"))
+            {
+                FoodSourcesCounts = new[] { 50 };
+                mutationtypes = new[] { "swap" };
+                Limits = new[] { 300 };
+            }
+            FoodSourcesCounts = new[] { 50 };
+            mutationtypes = new[] { "swap" };
+            Limits = new[] { 300 };
+            if (scenarios==null)
+                scenarios = InstanceGenerator.GenerateManyScenarios(numberScenario, "pliki//100 lokacji//" + fileType + ".txt");
+            Stopwatch sw = Stopwatch.StartNew();
+            List<ExperimentResultBee> rawResults = ExperimentRunner.RunExperimentsBee(scenarios, FoodSourcesCounts, Limits, mutationtypes, fileType,
+                repeats: repeats, baseSeed: 42, parallel: false, maxTime: maxTime, defaultFilePath: "results_raw_bee_parameter_tuning_");
             Console.WriteLine($"\nAll experiments completed in {sw.Elapsed.TotalSeconds} seconds.");
         }
     }

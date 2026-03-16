@@ -76,6 +76,30 @@ public class Solution
         return true;
     }
 
+    public Solution DeepCopy(Solution org)
+    {
+        List<Route> newRoutes = new List<Route>();
+        for (int r = 0; r < org.Routes.Count; r++)
+        {
+            List<Location> newStops = new List<Location>();
+            for (int stop = 0; stop < org.Routes[r].Stops.Count; stop++)
+            {
+                newStops.Add(org.Routes[r].Stops[stop]);
+            }
+            var newRoute = new Route(org.Routes[r].TruckCapacity, newStops, org.Routes[r].StartTime, org.Routes[r].CurrentLoad, org.Routes[r].Cost, org.Routes[r].Penalty, org.Routes[r].vehicleOperationTime);
+
+            newRoutes.Add(newRoute);
+        }
+        return new Solution(newRoutes)
+        {
+            TotalCost = org.TotalCost,
+            TotalPenalty = org.TotalPenalty,
+            TotalVehicleOperationTime = org.TotalVehicleOperationTime,
+            move = org.move
+        };
+
+    }
+
     public override string ToString()
     {
         var stringValue = Routes.Count+"|";
