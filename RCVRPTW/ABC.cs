@@ -9,8 +9,13 @@ namespace RCVRPTW
 {
     internal class ABC
     {
-        public static Solution run(int FoodSourcesCount, int Limit, Instance instance, string mutationtype = "swap", int maxTime = 120)
+        public static Solution run(int FoodSourcesCount, int Limit, Instance instance, string mutationtype = "swap", int maxTime = 120, int all_or_one = 1)
         {
+            if(all_or_one== 1)
+                Console.WriteLine($"Running ABC with {FoodSourcesCount} food sources, limit {Limit}, mutation type {mutationtype}, max time {maxTime} seconds, using one random neighbor.");
+            else
+                Console.WriteLine($"Running ABC with {FoodSourcesCount} food sources, limit {Limit}, mutation type {mutationtype}, max time {maxTime} seconds, using best neighbor.");
+            Console.WriteLine();
             List<Solution> foodSources = new List<Solution>();
             int[] trials = new int[FoodSourcesCount]; 
 
@@ -39,7 +44,7 @@ namespace RCVRPTW
             {
                 for (int i = 0; i < FoodSourcesCount; i++)
                 {
-                    Solution neighbor = GenerateNeighbor(foodSources[i], mutationtype, instance, rng);
+                    Solution neighbor = GenerateNeighbor(foodSources[i], mutationtype, instance, rng, all_or_one);
                     if (GetFitness(neighbor) < GetFitness(foodSources[i]))
                     {
                         foodSources[i] = neighbor;
@@ -57,7 +62,7 @@ namespace RCVRPTW
                     double prob = (1.0 / (1.0 + GetObjective(foodSources[i]))) / totalFitness;
                     if (rng.NextDouble() < prob)
                     {
-                        Solution neighbor = GenerateNeighbor(foodSources[i], mutationtype, instance, rng);
+                        Solution neighbor = GenerateNeighbor(foodSources[i], mutationtype, instance, rng, all_or_one);
                         if (GetFitness(neighbor) < GetFitness(foodSources[i]))
                         {
                             foodSources[i] = neighbor;
@@ -92,9 +97,9 @@ namespace RCVRPTW
 
                 iter++;
             }
-
-            Console.WriteLine($"\nABC completed {iter} iterations.");
             bestSolution.GreedyMetrics = GreedyMetrics;
+            Console.WriteLine($"\nABC completed {iter} iterations. Greedy {bestSolution.GreedyMetrics.greedyTotalCost}. Bee best solution {bestSolution.TotalCost + bestSolution.TotalPenalty + bestSolution.TotalVehicleOperationTime}");
+            
             return bestSolution;
         }
 
@@ -108,13 +113,17 @@ namespace RCVRPTW
             return GetObjective(s);
         }
 
-        private static Solution GenerateNeighbor(Solution current, string mutationtype, Instance instance, Random rng)
+        private static Solution GenerateNeighbor(Solution current, string mutationtype, Instance instance, Random rng, int all_or_one)
         {
             string mutation = mutationtype == "random" ?
                 (new[] { "swap", "invert", "insert", "2opt", "oropt", "rand" })[rng.Next(6)] : mutationtype;
-
-            var neighborhood = NeighborhoodGeneratorLocation.GenerateAllSwaps(current.Routes, instance.Vehicles, instance, mutation);
+            List<Solution> neighborhood = null;
+            if(all_or_one == 1)
+                neighborhood = NeighborhoodGeneratorLocation.GenerateOneSwap(current.Routes, instance.Vehicles, instance, mutation);
+            else
+                neighborhood = NeighborhoodGeneratorLocation.GenerateAllSwaps(current.Routes, instance.Vehicles, instance, mutation);
             neighborhood.Sort((s1, s2) => GetFitness(s1).CompareTo(GetFitness(s2))); // Sortujemy sąsiedztwo po fitnessie
+            //zrobić wersje z jednym losowym sąsiadem i z najlepszym sąsiadem
             return neighborhood.ElementAt(rng.Next(Math.Min(10, neighborhood.Count())));
         }
     }

@@ -186,7 +186,8 @@ namespace RCVRPTW
             int baseSeed = 12345,
             bool parallel = true,
             int maxTime = 120,
-            string defaultFilePath = "results_raw_"
+            string defaultFilePath = "results_raw_",
+            int all_or_one = 1
             )
         {
             if (File.Exists($"{defaultFilePath}{fileType}.csv"))
@@ -217,7 +218,7 @@ namespace RCVRPTW
                                     var sw = Stopwatch.StartNew();
 
                                     var instance = scen.Instance;
-                                    Solution solution = ABC.run(foodSourcesCount, limit, instance, mutationtype, maxTime: maxTime);
+                                    Solution solution = ABC.run(foodSourcesCount, limit, instance, mutationtype, maxTime: maxTime, all_or_one: all_or_one);
                                     sw.Stop();
 
                                     var res = new ExperimentResultBee

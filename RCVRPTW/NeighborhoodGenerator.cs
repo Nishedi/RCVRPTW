@@ -472,6 +472,103 @@ public static class NeighborhoodGeneratorLocation
         return neighbors.OrderBy(sol => sol.TotalCost).ToList();
     }
 
+    public static List<Solution> GenerateOneSwap(List<Route> routes, List<Vehicle> vehicles, Instance instance, string mutationType)//pomyslec czy nie liczyc juz przy generowaniu mutacji zamiast poxniej
+    {
+        List<Solution> neighbors = new List<Solution>();
+        var routeNeighbors = new List<List<Route>>();
+        List<Location> allLocations = routes.SelectMany(route => route.Stops).ToList();
+        for (int iter = 0; iter < 5; iter++)
+        {
+            allLocations.Add(allLocations[0]);
+        }
+
+        bool invalidRoute = true;
+
+        
+        while (invalidRoute) {
+            int i = Random.Shared.Next(1, allLocations.Count - 1);
+            int j = Random.Shared.Next(1, allLocations.Count - 1);
+
+            while (i == j) j = Random.Shared.Next(1, allLocations.Count - 1);
+            {
+                
+                List<Location> neighbor = DeepCopyLocations(allLocations);
+                if (mutationType == "insert")
+                    neighbor = insert(neighbor, i, j);
+                else if (mutationType == "invert")
+                    neighbor = invert(neighbor, i, j);
+                else if (mutationType == "swap")
+                    neighbor = swap(neighbor, i, j);
+                else if (mutationType == "2opt")
+                    neighbor = twoOpt(neighbor, i, j);
+                else if (mutationType == "oropt")
+                {
+                    int length = Math.Min(3, Math.Max(1, (j - i) / 3));
+                    neighbor = orOpt(neighbor, i, length, j);
+                }
+                else if (mutationType == "cross")
+                {
+                    int lengthI = Math.Min(2, allLocations.Count - i - 1);
+                    int lengthJ = Math.Min(2, allLocations.Count - j - 1);
+                    neighbor = crossExchange(neighbor, i, lengthI, j, lengthJ);
+                }
+                else
+                    neighbor = swap(neighbor, i, j);
+                List<Route> nRoutes = new List<Route>();
+                List<Location> nLocations = new List<Location>();
+                var routeWeight = 0.0;
+                
+                foreach (var location in neighbor)
+                {
+                    if (location.Id == 0)
+                    {
+                        if (nLocations.Count > 0)
+                        {
+                            var route = new Route(90, nLocations, 0, routeWeight);
+                            route.Stops.Add(allLocations[0]);
+                            route.Stops.Insert(0, allLocations[0]);
+                            (route.Cost, route.Penalty, route.vehicleOperationTime, route.StartTime) = bestStartTime(nLocations, instance);
+                            nRoutes.Add(route);
+                            nLocations = new List<Location>();
+                            routeWeight = 0;
+                        }
+                    }
+                    else
+                    {
+                        nLocations.Add(location);
+                        routeWeight += location.Demand;
+                    }
+                }
+                invalidRoute = false;
+                foreach (var route in nRoutes)
+                {
+                    if (route.CurrentLoad > vehicles[0].Capacity)
+                    {
+                        invalidRoute = true;
+                        break;
+                    }
+                }
+                if (!invalidRoute)
+                    routeNeighbors.Add(nRoutes);
+
+            }
+        }
+        foreach (var routeSet in routeNeighbors)
+        {
+            var solution = new Solution(DeepCopyRoutes(routeSet));
+            foreach (var route in solution.Routes)
+            {
+                solution.TotalPenalty += route.Penalty;
+                solution.TotalCost += route.Cost;
+                solution.TotalVehicleOperationTime += route.vehicleOperationTime;
+                solution.TotalMixedMetrics = solution.sumMetrics();
+            }
+
+            neighbors.Add(solution);
+        }
+        return neighbors.OrderBy(sol => sol.TotalCost).ToList();
+    }
+
     public static (double bestCost, double bestPenalty, double bestVehicleOperationTime, double bestStartTime) bestStartTime(List<Location> stops, Instance instance)
     {
         var startTime = 0; 

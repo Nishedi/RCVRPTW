@@ -6,7 +6,7 @@ namespace RCVRPTW
 {
     public class CVRPTW_Model
     {
-        public static double Solve(Instance instance, double timeLimitSeconds = 300.0)
+        public static (double gurobiValue, bool isOpt) Solve(Instance instance, double timeLimitSeconds = 300.0)
         {
             try
             {
@@ -153,7 +153,8 @@ namespace RCVRPTW
 
                         if (model.SolCount > 0)
                         {
-                            if (model.Status == GRB.Status.OPTIMAL)
+                            bool isOptimal = model.Status == GRB.Status.OPTIMAL;
+                            if (isOptimal)
                                 Console.WriteLine("SOLUTION is OPTIMAL");
 
                             Console.WriteLine($" COST GUROBI (ObjVal): {model.ObjVal:F2}");
@@ -209,12 +210,12 @@ namespace RCVRPTW
                                     Console.WriteLine($"\nPodsumowanie pojazdu: Dystans {routeDist:F2}, Czas operacyjny {currentOpTime:F2}");
                                 }
                             }
-                            return model.ObjVal;
+                            return (model.ObjVal, isOptimal);
                         }
                         else
                         {
                             Console.WriteLine($"\nGurobi nie znalazło dopuszczalnego rozwiązania.");
-                            return double.PositiveInfinity;
+                            return (double.PositiveInfinity, false);
                         }
                     }
                 }
@@ -222,7 +223,7 @@ namespace RCVRPTW
             catch (GRBException ex)
             {
                 Console.WriteLine($"Błąd Gurobi: {ex.Message}");
-                return double.PositiveInfinity;
+                return (double.PositiveInfinity, false);
             }
         }
     }

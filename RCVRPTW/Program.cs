@@ -19,7 +19,7 @@ public static class Program
     static string[] mutationtypes = new[] { "swap" };//, "invert", "insert", "2opt", "oropt", "rand" };
     static void Main(string[] args)
     {
-        //args = new[] { "C201", "3", "1" };
+        args = new[] { "C201", "5", "10" };
         if (args.Length > 0)
         {
             Console.WriteLine($"Running experiments for file type: {args[0]} {args[1]} second per test");
@@ -47,60 +47,64 @@ public static class Program
             var scenarios = InstanceGenerator.GenerateManyScenarios(numberScenarios, "pliki//100 lokacji//" + fileType + ".txt"); Stopwatch sw = Stopwatch.StartNew();
 
 
-            TestParametersBee testBee = new TestParametersBee(fileType, repeats: 2, maxTime: maxTime, numberScenario: numberScenarios, scenarios: scenarios);
-            TestParameters testTabu = new TestParameters(fileType, repeats: 2, maxTime: maxTime, numberScenario: numberScenarios, scenarios: scenarios);
+            TestParametersBee testBee = new TestParametersBee(fileType, repeats: 1, maxTime: maxTime, numberScenario: numberScenarios, scenarios: scenarios);
+            //TestParametersBee testBeeOne = new TestParametersBee(fileType, repeats: 1, maxTime: maxTime, numberScenario: numberScenarios, scenarios: scenarios, all_or_one: 0);
+
+            TestParameters testTabu = new TestParameters(fileType, repeats: 1, maxTime: maxTime, numberScenario: numberScenarios, scenarios: scenarios);
         }
         else
         {
             fileNames = new[] { "CTEST9.txt", "CTEST.txt", "CTEST11.txt", "CTEST12.txt"};
 
-            fileNames = new [] { "100 lokacji//C101.txt" }; 
+            fileNames = new [] { "100 lokacji//C101.txt", "100 lokacji//C201.txt", "100 lokacji//R101.txt",
+                "100 lokacji//R101.txt", "100 lokacji//RC101.txt", "100 lokacji//RC201.txt"
+            };
+            fileNames = new[] {  "R201_13.txt", "RC101_13.txt", "RC201_13.txt" };
             //fileNames = new[] { "CTEST9.txt" }
-            Dictionary<string, (double gurobi, double experiment, double beeExperiment, int time)> results = new Dictionary<string, (double gurobi, double experiment, double experimentBee, int time)>();
+            Dictionary<string, (double gurobi, double experiment, double beeExperiment, int time, bool isOpt)> results = new Dictionary<string, (double gurobi, double experiment, double experimentBee, int time, bool isOpt)>();
             foreach (var file in fileNames)
             {
-                bool gurobi = false;
+                bool gurobi = true;
                 Console.WriteLine("Tryb Gurobi");
                 string testFile = "pliki//"+file;
+                int scenariosPerFile = 20;
 
-                var scenarios = InstanceGenerator.GenerateManyScenarios(5, testFile);
+                var scenarios = InstanceGenerator.GenerateManyScenarios(scenariosPerFile, testFile);
 
                 Stopwatch sw2 = Stopwatch.StartNew();
                 var executionTime = 600;
-                List<double> gurobiresults = new List<double>();
-                for(int i = 0; i < scenarios.Count; i++)
+                List<(double gurobiValue, bool isOpt)> gurobiresults = new List<(double gurobiValue, bool isOpt)>();
+                Stopwatch gurobiTime = Stopwatch.StartNew();
+                for (int i = 0; i < scenarios.Count; i++)
                 {
                     Stopwatch sw = Stopwatch.StartNew();
                     Instance instance = scenarios[i].Instance;
                     if (gurobi)
                         gurobiresults.Add(CVRPTW_Model.Solve(instance, timeLimitSeconds: 600.0));
                     else
-                        gurobiresults.Add(0.0);
+                        gurobiresults.Add((0.0,false));
                     executionTime = (int) sw.Elapsed.TotalSeconds;
                 }
-                if (gurobi)
-                    executionTime = Math.Min(120,Math.Max(executionTime, 10));
-                else
-                    executionTime = 300;
-
+                int timeGurobi = (int) gurobiTime.Elapsed.TotalSeconds;
+                executionTime = 30;
 
                 List<ExperimentResult> rawResults = ExperimentRunner.RunExperiments(scenarios, iters, tabu, mutationtypes, file, repeats: 1, baseSeed: 42, parallel: false, maxTime: (int) executionTime, useRL: false, rlModelPath: null);
                 List<ExperimentResultBee> rawBeeResults = ExperimentRunner.RunExperimentsBee(scenarios, FoodSourcesCounts, limits, mutationtypes, file, repeats: 1, baseSeed: 42, parallel: false, maxTime: (int) executionTime);
 
                 for (int i = 0; i < rawResults.Count; i++)
                 {
-                    results.Add(i+"_"+file, ((int)gurobiresults[i], (int)rawResults[i].Objective, (int)rawBeeResults[i].Objective, -1));
-                    Console.WriteLine(i+"_"+file +" "+ ((int)gurobiresults[i] +" "+ (int)rawResults[i].Objective +" "+ (int)rawBeeResults[i].Objective));
+                    results.Add(i+"_"+file, ((int)gurobiresults[i].gurobiValue, (int)rawResults[i].Objective, (int)rawBeeResults[i].Objective, (int)(timeGurobi/scenariosPerFile), gurobiresults[i].isOpt));
+                    Console.WriteLine(i+"_"+file +" "+ ((int)gurobiresults[i].gurobiValue +" "+ (int)rawResults[i].Objective +" "+ (int)rawBeeResults[i].Objective)+" " + (int)(timeGurobi / scenariosPerFile) + " " + gurobiresults[i].isOpt);
                 }
                
                 Console.WriteLine($"\nAll experiments completed in {sw2.Elapsed.TotalSeconds} seconds.");
                 using (var writer = new StreamWriter("results_comparison.csv"))
                 {
-                    writer.WriteLine("File,GurobiCost,ExperimentCost,BeeExperimentCost,gurobi_vs_tabu");
+                    writer.WriteLine("File,GurobiCost,ExperimentCost,BeeExperimentCost,gurobi_vs_tabu,gurobiTime,isOpt");
                     foreach (var kvp in results)
                     {
-                        writer.WriteLine($"{kvp.Key},{kvp.Value.gurobi},{kvp.Value.experiment},{kvp.Value.beeExperiment},{(kvp.Value.gurobi - kvp.Value.experiment) / kvp.Value.experiment}");
-                        Console.WriteLine($"{kvp.Key},{kvp.Value.gurobi},{kvp.Value.experiment},{kvp.Value.beeExperiment},{(kvp.Value.gurobi - kvp.Value.experiment) / kvp.Value.experiment}");
+                        writer.WriteLine($"{kvp.Key},{kvp.Value.gurobi},{kvp.Value.experiment},{kvp.Value.beeExperiment},{(kvp.Value.gurobi - kvp.Value.experiment) / kvp.Value.experiment},{kvp.Value.time},{kvp.Value.isOpt}");
+                        Console.WriteLine($"{kvp.Key},{kvp.Value.gurobi},{kvp.Value.experiment},{kvp.Value.beeExperiment},{(kvp.Value.gurobi - kvp.Value.experiment) / kvp.Value.experiment},{kvp.Value.time},{kvp.Value.isOpt}");
 
                     }
                 }
@@ -144,6 +148,13 @@ namespace RCVRPTW
                 scenarios = InstanceGenerator.GenerateManyScenarios(numberScenario, "pliki//100 lokacji//" + fileType + ".txt"); Stopwatch sw = Stopwatch.StartNew();
             List<ExperimentResult> rawResults = ExperimentRunner.RunExperiments(scenarios, iters, TabuSizes, mutationtypes, fileType, 
                 repeats: repeats, baseSeed: 42, parallel: false,maxTime:maxTime,defaultFilePath:"results_raw_parameter_tuning_");
+            for (int i = 0; i < 101; i++)
+            {
+                if (!rawResults[0].GTR.Contains(i))
+                {
+                    Console.WriteLine("Missing " + i);
+                }
+            }
             Console.WriteLine($"\nAll experiments completed in {sw.Elapsed.TotalSeconds} seconds.");
         }
     }
@@ -152,7 +163,7 @@ namespace RCVRPTW
         int[] FoodSourcesCounts { get; set; }
         int[] Limits { get; set; }
         public string[] mutationtypes { get; set; }
-        public TestParametersBee(string fileType, int repeats, int maxTime, int numberScenario, List<Scenario> scenarios = null)
+        public TestParametersBee(string fileType, int repeats, int maxTime, int numberScenario, List<Scenario> scenarios = null, int all_or_one= 1)
         {
             
             FoodSourcesCounts = new[] { 50, 100, 200 };
@@ -171,7 +182,14 @@ namespace RCVRPTW
                 scenarios = InstanceGenerator.GenerateManyScenarios(numberScenario, "pliki//100 lokacji//" + fileType + ".txt");
             Stopwatch sw = Stopwatch.StartNew();
             List<ExperimentResultBee> rawResults = ExperimentRunner.RunExperimentsBee(scenarios, FoodSourcesCounts, Limits, mutationtypes, fileType,
-                repeats: repeats, baseSeed: 42, parallel: false, maxTime: maxTime, defaultFilePath: "results_raw_bee_parameter_tuning_");
+                repeats: repeats, baseSeed: 42, parallel: false, maxTime: maxTime, defaultFilePath: "results_raw_bee_parameter_tuning_", all_or_one: all_or_one);
+            for(int i = 0; i < 101;i++)
+            {
+                if (!rawResults[0].GTR.Contains(i))
+                {
+                    Console.WriteLine("Missing " + i);
+                }
+            }
             Console.WriteLine($"\nAll experiments completed in {sw.Elapsed.TotalSeconds} seconds.");
         }
     }
@@ -200,7 +218,7 @@ namespace RCVRPTW
 
         public static Scenario GenerateInstance(int scenarioId, Random rng, string filename)
         {
-            var preparedInstance = new Instance(filename, 10, true, true,
+            var preparedInstance = new Instance(filename, 50, true, true,
                 waitingFactor: 1.0, distanceFactor: 1.0, penaltyFactor: 2.0,
                 toEarlyPenaltyFactor: 1.0, toLatePenaltyFactor: 2.0, rng
                 );
